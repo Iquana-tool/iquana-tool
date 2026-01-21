@@ -1,0 +1,115 @@
+services:
+  # Frontend - React Application
+  coral-front:
+    build:
+      context: ./coral-front
+      dockerfile: Dockerfile
+    image: coral-front
+    container_name: coral-front
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-http://localhost:8000}
+      - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://localhost:8000}
+    networks:
+      - coral-network
+    restart: unless-stopped
+    depends_on:
+      - coral-back
+    labels:
+      - "authors=dev-team"
+
+  # Backend API - Main Application Backend
+  coral-back:
+    build:
+      context: ./coral-back
+      dockerfile: Dockerfile
+    image: coral-back
+    container_name: coral-back
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+      - ./coral-back/logs:/app/logs
+    environment:
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:7000}
+      - PROMPTED_SEGMENTATION_BACKEND_URL=${PROMPTED_SEGMENTATION_BACKEND_URL:-http://coral-prompted-seg:8001}
+      - AUTOMATIC_SEGMENTATION_BACKEND_URL=${AUTOMATIC_SEGMENTATION_BACKEND_URL:-http://coral-semantic-seg:7000}
+      - COMPLETION_SEGMENTATION_BACKEND_URL=${COMPLETION_SEGMENTATION_BACKEND_URL:-http://coral-completion-seg:8003}
+    networks:
+      - coral-network
+    restart: unless-stopped
+    command: uv run uvicorn main:app --host 0.0.0.0 --port 8000
+    depends_on:
+      - coral-prompted-seg
+      - coral-semantic-seg
+      - coral-completion-seg
+
+  # Prompted Segmentation Service
+  coral-prompted-seg:
+    build:
+      context: ./coral-prompted-seg
+      dockerfile: Dockerfile
+    image: coral-prompted-seg
+    container_name: coral-prompted-seg
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./coral-prompted-seg/weights:/app/weights
+      - ./coral-prompted-seg/configs:/app/configs
+      - ./coral-prompted-seg/logs:/app/logs
+    environment:
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8000,http://localhost:3000}
+      - PORT=${PROMPTED_PORT:-8001}
+      - LOG_DIR=/app/logs
+      - HYDRA_CONFIGS_DIR=/app/configs
+    networks:
+      - coral-network
+    restart: unless-stopped
+    command: uv run fastapi run main.py --port 8001
+
+  # Semantic/Automatic Segmentation Service
+  coral-semantic-seg:
+    build:
+      context: ./coral-semantic-seg
+      dockerfile: Dockerfile
+    image: coral-semantic-seg
+    container_name: coral-semantic-seg
+    ports:
+      - "7000:7000"
+    volumes:
+      - ./coral-semantic-seg/logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8000,http://localhost:3000}
+    networks:
+      - coral-network
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 7000
+
+  # Completion Segmentation Service
+  coral-completion-seg:
+    build:
+      context: ./coral-completion-seg
+      dockerfile: Dockerfile
+    image: coral-completion-seg
+    container_name: coral-completion-seg
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./coral-completion-seg/weights:/app/weights
+      - ./coral-completion-seg/logs:/app/logs
+    environment:
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8000,http://localhost:3000}
+      - PORT=${COMPLETION_PORT:-8003}
+      - LOG_DIR=/app/logs
+      - HF_ACCESS_TOKEN=${HF_ACCESS_TOKEN}
+    networks:
+      - coral-network
+    restart: unless-stopped
+    command: uv run uvicorn main:app --host 0.0.0.0 --port 8003
+
+networks:
+  coral-network:
+    driver: bridge
