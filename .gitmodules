@@ -1,0 +1,15 @@
+[submodule "coral-back"]
+	path = coral-back
+	url = https://github.com/yapat-app/coral-back.git
+[submodule "coral-front"]
+	path = coral-front
+	url = https://github.com/yapat-app/coral-front.git
+[submodule "coral-completion-seg"]
+	path = coral-completion-seg
+	url = https://github.com/yapat-app/coral-completion-seg.git
+[submodule "coral-prompted-seg"]
+	path = coral-prompted-seg
+	url = https://github.com/yapat-app/coral-prompted-seg.git
+[submodule "coral-semantic-seg"]
+	path = coral-semantic-seg
+	url = https://github.com/yapat-app/coral-semantic-seg.git
