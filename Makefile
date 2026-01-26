@@ -59,11 +59,11 @@ logs:
 
 # Build all services
 build:
-	docker-compose build
+	DOCKER_BUILDKIT=1 docker-compose build
 
 # Rebuild and restart all services
 rebuild:
-	docker-compose up -d --build
+	DOCKER_BUILDKIT=1 docker-compose up -d --build
 
 # Stop and remove volumes
 clean:

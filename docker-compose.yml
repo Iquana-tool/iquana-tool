@@ -93,6 +93,8 @@ services:
     build:
       context: ./coral-completion-seg
       dockerfile: Dockerfile
+      ssh:
+        - default
     image: coral-completion-seg
     container_name: coral-completion-seg
     ports:
