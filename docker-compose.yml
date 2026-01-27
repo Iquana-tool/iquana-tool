@@ -7,7 +7,7 @@ services:
     image: coral-front
     container_name: coral-front
     ports:
-      - "3000:3000"  # Only frontend exposed
+      - "8010:3000"  # Only frontend exposed
     environment:
       - NODE_ENV=production
       - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-http://localhost:8000}
