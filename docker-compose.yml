@@ -7,7 +7,7 @@ services:
     image: coral-front
     container_name: coral-front
     ports:
-      - "3000:3000"
+      - "3000:3000"  # Only frontend exposed
     environment:
       - NODE_ENV=production
       - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-http://localhost:8000}
@@ -28,9 +28,9 @@ services:
     image: coral-back
     container_name: coral-back
     ports:
-      - "8000:8000"
+      - "8000:8000"  # Only backend exposed
     volumes:
-      - ./data:/data
+      - coral-data:/data
       - ./coral-back/logs:/app/logs
     environment:
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:7000}
@@ -46,16 +46,19 @@ services:
       - coral-semantic-seg
       - coral-completion-seg
 
-  # Prompted Segmentation Service
+  # Prompted Segmentation Service (Internal Only)
   coral-prompted-seg:
     build:
       context: ./coral-prompted-seg
       dockerfile: Dockerfile
+      ssh:
+        - default
     image: coral-prompted-seg
     container_name: coral-prompted-seg
-    ports:
-      - "8001:8001"
+    expose:
+      - "8001"  # Exposed only to Docker network, not to host
     volumes:
+      - coral-data:/data
       - ./coral-prompted-seg/weights:/app/weights
       - ./coral-prompted-seg/configs:/app/configs
       - ./coral-prompted-seg/logs:/app/logs
@@ -69,16 +72,17 @@ services:
     restart: unless-stopped
     command: uv run fastapi run main.py --port 8001
 
-  # Semantic/Automatic Segmentation Service
+  # Semantic/Automatic Segmentation Service (Internal Only)
   coral-semantic-seg:
     build:
       context: ./coral-semantic-seg
       dockerfile: Dockerfile
     image: coral-semantic-seg
     container_name: coral-semantic-seg
-    ports:
-      - "7000:7000"
+    expose:
+      - "7000"  # Exposed only to Docker network, not to host
     volumes:
+      - coral-data:/data
       - ./coral-semantic-seg/logs:/app/logs
     environment:
       - PYTHONUNBUFFERED=1
@@ -88,7 +92,7 @@ services:
     restart: unless-stopped
     command: uvicorn main:app --host 0.0.0.0 --port 7000
 
-  # Completion Segmentation Service
+  # Completion Segmentation Service (Internal Only)
   coral-completion-seg:
     build:
       context: ./coral-completion-seg
@@ -97,9 +101,10 @@ services:
         - default
     image: coral-completion-seg
     container_name: coral-completion-seg
-    ports:
-      - "8003:8003"
+    expose:
+      - "8003"  # Exposed only to Docker network, not to host
     volumes:
+      - coral-data:/data
       - ./coral-completion-seg/weights:/app/weights
       - ./coral-completion-seg/logs:/app/logs
     environment:
@@ -111,6 +116,10 @@ services:
       - coral-network
     restart: unless-stopped
     command: uv run uvicorn main:app --host 0.0.0.0 --port 8003
+
+volumes:
+  coral-data:
+    driver: local
 
 networks:
   coral-network:
