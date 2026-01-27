@@ -10,8 +10,9 @@ services:
       - "5017:3000"  # Only frontend exposed
     environment:
       - NODE_ENV=production
-      - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-http://localhost:8000}
-      - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://localhost:8000}
+      - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-/demos/coral/api}
+      - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://demo-iml.sb.dfki.de/demos/coral/api}
+      - PUBLIC_URL=/demos/coral/tool
     networks:
       - coral-network
     restart: unless-stopped
