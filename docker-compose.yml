@@ -5,9 +5,10 @@ services:
       context: ./coral-front
       dockerfile: Dockerfile
       args:
-        - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-/demos/coral/api}
-        - REACT_APP_WS_URL=${REACT_APP_WS_URL:-wss://demo-iml.sb.dfki.de/demos/coral/api}
-        - PUBLIC_URL=${PUBLIC_URL:-/demos/coral/tool}
+       
+        - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-http://localhost:5018}
+        - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://localhost:5018}
+        - PUBLIC_URL=${PUBLIC_URL:-/}
     image: coral-front
     container_name: coral-front
     ports:
