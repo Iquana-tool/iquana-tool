@@ -6,11 +6,11 @@ A super repository that combines all services required for the Coral annotation 
 
 This repository orchestrates the following services:
 
-- **coral-front**: React frontend application (Port 3000)
-- **coral-back**: Main backend API server (Port 8000)
-- **coral-prompted-seg**: Prompted segmentation service using SAM models (Port 8001)
-- **coral-semantic-seg**: Semantic/automatic segmentation service (Port 7000)
-- **coral-completion-seg**: Completion segmentation service (Port 8003)
+- **frontend-react**: React frontend application (Port 4000)
+- **backend**: Main backend API server (Port 4001)
+- **prompted-seg-service**: Prompted segmentation service using SAM models (Port 4002)
+- **semantic-seg-service**: Semantic/automatic segmentation service (Port 4003)
+- **instance-discovery-service**: Completion segmentation service (Port 4004)
 
 ## Getting Started
 
@@ -46,7 +46,7 @@ docker-compose up -d
 docker-compose logs -f
 
 # View logs for specific service
-docker-compose logs -f coral-back
+docker-compose logs -f backend
 ```
 
 ## Managing Services
@@ -65,12 +65,12 @@ docker-compose down -v
 
 Data is persisted in the following locations:
 - `./data`: Application data (datasets, images, etc.)
-- `./coral-back/logs`: Backend logs
-- `./coral-prompted-seg/weights`: Model weights for prompted segmentation
-- `./coral-prompted-seg/logs`: Prompted segmentation logs
-- `./coral-semantic-seg/logs`: Semantic segmentation logs
-- `./coral-completion-seg/weights`: Model weights for completion segmentation
-- `./coral-completion-seg/logs`: Completion segmentation logs
+- `./backend/logs`: Backend logs
+- `./prompted-seg-service/weights`: Model weights for prompted segmentation
+- `./prompted-seg-service/logs`: Prompted segmentation logs
+- `./semantic-seg-service/logs`: Semantic segmentation logs
+- `./instance-discovery-service/weights`: Model weights for completion segmentation
+- `./instance-discovery-service/logs`: Completion segmentation logs
 
 ## Updating Submodules
 
@@ -81,7 +81,7 @@ To update all submodules to their latest versions:
 git submodule update --remote
 
 # Or update a specific submodule
-git submodule update --remote coral-back
+git submodule update --remote backend
 ```
 
 ## Development
@@ -92,7 +92,7 @@ Each submodule is a separate git repository. To make changes:
 
 ```bash
 # Navigate to the submodule
-cd coral-back
+cd backend
 
 # Create a branch and make changes
 git checkout -b feature/my-feature
@@ -106,6 +106,6 @@ cd ..
 
 # The super repo will show the submodule has changed
 git status
-git add coral-back
-git commit -m "Update coral-back submodule"
+git add backend
+git commit -m "Update backend submodule"
 ```

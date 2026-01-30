@@ -1,17 +1,17 @@
-[submodule "coral-back"]
-	path = coral-back
+[submodule "backend"]
+	path = backend
 	url = https://github.com/Iquana-tool/backend.git
 	branch = improvement/review_status
-[submodule "coral-front"]
-	path = coral-front
+[submodule "frontend-react"]
+	path = frontend-react
 	url = https://github.com/Iquana-tool/frontend-react.git
 	branch = migration/Version2
-[submodule "coral-completion-seg"]
-	path = coral-completion-seg
+[submodule "instance-discovery-service"]
+	path = instance-discovery-service
 	url = https://github.com/Iquana-tool/instance-discovery-service.git
-[submodule "coral-prompted-seg"]
-	path = coral-prompted-seg
+[submodule "prompted-seg-service"]
+	path = prompted-seg-service
 	url = https://github.com/Iquana-tool/prompted-seg-service.git
-[submodule "coral-semantic-seg"]
-	path = coral-semantic-seg
+[submodule "semantic-seg-service"]
+	path = semantic-seg-service
 	url = https://github.com/Iquana-tool/semantic-seg-service.git

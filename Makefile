@@ -14,8 +14,8 @@ help:
 	@echo "  make rebuild    - Rebuild and restart all services"
 	@echo "  make clean      - Stop services and remove volumes"
 	@echo "  make status     - Show status of all services"
-	@echo "  make shell-back - Open shell in coral-back container"
-	@echo "  make shell-front - Open shell in coral-front container"
+	@echo "  make shell-back - Open shell in backend container"
+	@echo "  make shell-front - Open shell in frontend-react container"
 	@echo ""
 	@echo "Service-specific commands:"
 	@echo "  make up-front   - Start only frontend"
@@ -41,9 +41,9 @@ up:
 	docker-compose up -d
 	@echo ""
 	@echo "✅ All services started!"
-	@echo "Frontend: http://localhost:3000"
-	@echo "Backend: http://localhost:8000"
-	@echo "API Docs: http://localhost:8000/docs"
+	@echo "Frontend: http://localhost:4000"
+	@echo "Backend: http://localhost:4001"
+	@echo "API Docs: http://localhost:4001/docs"
 
 # Stop all services
 down:
@@ -76,41 +76,41 @@ status:
 
 # Service-specific commands
 up-front:
-	docker-compose up -d coral-front
+	docker-compose up -d frontend-react
 
 up-back:
-	docker-compose up -d coral-back
+	docker-compose up -d backend
 
 logs-front:
-	docker-compose logs -f coral-front
+	docker-compose logs -f frontend-react
 
 logs-back:
-	docker-compose logs -f coral-back
+	docker-compose logs -f backend
 
 logs-prompted:
-	docker-compose logs -f coral-prompted-seg
+	docker-compose logs -f prompted-seg-service
 
 logs-semantic:
-	docker-compose logs -f coral-semantic-seg
+	docker-compose logs -f semantic-seg-service
 
 logs-completion:
-	docker-compose logs -f coral-completion-seg
+	docker-compose logs -f instance-discovery-service
 
 # Open shell in containers
 shell-back:
-	docker-compose exec coral-back /bin/bash
+	docker-compose exec backend /bin/bash
 
 shell-front:
-	docker-compose exec coral-front /bin/sh
+	docker-compose exec frontend-react /bin/sh
 
 shell-prompted:
-	docker-compose exec coral-prompted-seg /bin/bash
+	docker-compose exec prompted-seg-service /bin/bash
 
 shell-semantic:
-	docker-compose exec coral-semantic-seg /bin/bash
+	docker-compose exec semantic-seg-service /bin/bash
 
 shell-completion:
-	docker-compose exec coral-completion-seg /bin/bash
+	docker-compose exec instance-discovery-service /bin/bash
 
 # Update submodules to latest
 update:

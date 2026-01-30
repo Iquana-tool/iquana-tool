@@ -1,72 +1,72 @@
 services:
   # Frontend - React Application
-  coral-front:
+  frontend-react:
     build:
-      context: ./coral-front
+      context: ./frontend-react
       dockerfile: Dockerfile
       args:
        
-        - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-http://localhost:5018}
-        - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://localhost:5018}
+        - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-http://localhost:4001}
+        - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://localhost:4001}
         - PUBLIC_URL=${PUBLIC_URL:-/}
-    image: coral-front
-    container_name: coral-front
+    image: frontend-react
+    container_name: frontend-react
     ports:
-      - "5017:3000"  # Only frontend exposed
+      - "4000:3000"  # Frontend on port 4000
     environment:
       - NODE_ENV=production
     networks:
       - coral-network
     restart: unless-stopped
     depends_on:
-      - coral-back
+      - backend
     labels:
       - "authors=dev-team"
 
   # Backend API - Main Application Backend
-  coral-back:
+  backend:
     build:
-      context: ./coral-back
+      context: ./backend
       dockerfile: Dockerfile
-    image: coral-back
-    container_name: coral-back
+    image: backend
+    container_name: backend
     ports:
-      - "5018:8000"  # Only backend exposed
+      - "4001:8000"  # Backend on port 4001
     volumes:
       - coral-data:/data
-      - ./coral-back/logs:/app/logs
+      - ./backend/logs:/app/logs
     environment:
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:7000}
-      - PROMPTED_SEGMENTATION_BACKEND_URL=${PROMPTED_SEGMENTATION_BACKEND_URL:-http://coral-prompted-seg:8001}
-      - AUTOMATIC_SEGMENTATION_BACKEND_URL=${AUTOMATIC_SEGMENTATION_BACKEND_URL:-http://coral-semantic-seg:7000}
-      - COMPLETION_SEGMENTATION_BACKEND_URL=${COMPLETION_SEGMENTATION_BACKEND_URL:-http://coral-completion-seg:8003}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4000,http://localhost:4003}
+      - PROMPTED_SEGMENTATION_BACKEND_URL=${PROMPTED_SEGMENTATION_BACKEND_URL:-http://prompted-seg-service:8001}
+      - AUTOMATIC_SEGMENTATION_BACKEND_URL=${AUTOMATIC_SEGMENTATION_BACKEND_URL:-http://semantic-seg-service:7000}
+      - COMPLETION_SEGMENTATION_BACKEND_URL=${COMPLETION_SEGMENTATION_BACKEND_URL:-http://instance-discovery-service:8003}
     networks:
       - coral-network
     restart: unless-stopped
     command: uv run uvicorn main:app --host 0.0.0.0 --port 8000
     depends_on:
-      - coral-prompted-seg
-      - coral-semantic-seg
-      - coral-completion-seg
+      - prompted-seg-service
+      - semantic-seg-service
+      - instance-discovery-service
 
   # Prompted Segmentation Service (Internal Only)
-  coral-prompted-seg:
+  prompted-seg-service:
     build:
-      context: ./coral-prompted-seg
+      context: ./prompted-seg-service
       dockerfile: Dockerfile
       ssh:
         - default
-    image: coral-prompted-seg
-    container_name: coral-prompted-seg
-    expose:
-      - "8001"  # Exposed only to Docker network, not to host
+    image: prompted-seg-service
+    container_name: prompted-seg-service
+    ports:
+      - "4002:8001"  # Prompted segmentation service on port 4002
     volumes:
       - coral-data:/data
-      - ./coral-prompted-seg/weights:/app/weights
-      - ./coral-prompted-seg/configs:/app/configs
-      - ./coral-prompted-seg/logs:/app/logs
+      - ./prompted-seg-service/weights:/app/weights
+      - ./prompted-seg-service/configs:/app/configs
+      - ./prompted-seg-service/logs:/app/logs
     environment:
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8000,http://localhost:3000}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4001,http://localhost:4000}
       - PORT=${PROMPTED_PORT:-8001}
       - LOG_DIR=/app/logs
       - HYDRA_CONFIGS_DIR=/app/configs
@@ -76,42 +76,42 @@ services:
     command: uv run fastapi run main.py --port 8001
 
   # Semantic/Automatic Segmentation Service (Internal Only)
-  coral-semantic-seg:
+  semantic-seg-service:
     build:
-      context: ./coral-semantic-seg
+      context: ./semantic-seg-service
       dockerfile: Dockerfile
-    image: coral-semantic-seg
-    container_name: coral-semantic-seg
-    expose:
-      - "7000"  # Exposed only to Docker network, not to host
+    image: semantic-seg-service
+    container_name: semantic-seg-service
+    ports:
+      - "4003:7000"  # Semantic segmentation service on port 4003
     volumes:
       - coral-data:/data
-      - ./coral-semantic-seg/logs:/app/logs
+      - ./semantic-seg-service/logs:/app/logs
     environment:
       - PYTHONUNBUFFERED=1
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8000,http://localhost:3000}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4001,http://localhost:4000}
     networks:
       - coral-network
     restart: unless-stopped
     command: uvicorn main:app --host 0.0.0.0 --port 7000
 
   # Completion Segmentation Service (Internal Only)
-  coral-completion-seg:
+  instance-discovery-service:
     build:
-      context: ./coral-completion-seg
+      context: ./instance-discovery-service
       dockerfile: Dockerfile
       ssh:
         - default
-    image: coral-completion-seg
-    container_name: coral-completion-seg
-    expose:
-      - "8003"  # Exposed only to Docker network, not to host
+    image: instance-discovery-service
+    container_name: instance-discovery-service
+    ports:
+      - "4004:8003"  # Instance discovery service on port 4004
     volumes:
       - coral-data:/data
-      - ./coral-completion-seg/weights:/app/weights
-      - ./coral-completion-seg/logs:/app/logs
+      - ./instance-discovery-service/weights:/app/weights
+      - ./instance-discovery-service/logs:/app/logs
     environment:
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8000,http://localhost:3000}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4001,http://localhost:4000}
       - PORT=${COMPLETION_PORT:-8003}
       - LOG_DIR=/app/logs
       - HF_ACCESS_TOKEN=${HF_ACCESS_TOKEN}
