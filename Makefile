@@ -23,6 +23,11 @@ help:
 	@echo "  make logs-front - View frontend logs"
 	@echo "  make logs-back  - View backend logs"
 	@echo ""
+	@echo "Git/Submodule commands:"
+	@echo "  make update     - Update submodules to latest tracked branch"
+	@echo "  make pull-all   - Pull latest from super repo and all submodules"
+	@echo "  make pull-merge - Pull and merge (handles diverged branches)"
+	@echo ""
 
 # Initialize: Update submodules and create .env if it doesn't exist
 init:
@@ -117,3 +122,39 @@ update:
 	@echo "Updating all submodules..."
 	git submodule update --remote
 	@echo "✅ Submodules updated"
+
+# Pull latest changes from super repo and all submodules
+pull-all:
+	@echo "Pulling latest changes from super repo..."
+	git pull origin main
+	@echo ""
+	@echo "Updating submodules to latest commits..."
+	git submodule update --remote --recursive
+	@echo ""
+	@echo "Pulling latest changes in each submodule..."
+	@for dir in backend frontend-react instance-discovery-service prompted-seg-service semantic-seg-service; do \
+		if [ -d "$$dir" ]; then \
+			echo "=== Pulling $$dir ==="; \
+			cd $$dir && git pull origin $$(git branch --show-current 2>/dev/null || echo "main") && cd .. || true; \
+		fi; \
+	done
+	@echo ""
+	@echo "✅ All repositories updated"
+
+# Pull and merge submodules (handles diverged branches)
+pull-merge:
+	@echo "Pulling latest changes from super repo..."
+	git pull origin main
+	@echo ""
+	@echo "Pulling and merging in each submodule..."
+	@for dir in backend frontend-react instance-discovery-service prompted-seg-service semantic-seg-service; do \
+		if [ -d "$$dir" ]; then \
+			echo "=== Pulling $$dir ==="; \
+			cd $$dir && \
+			branch=$$(git branch --show-current 2>/dev/null || echo "main") && \
+			git pull origin $$branch --no-rebase 2>&1 | grep -v "Already up to date" || true && \
+			cd ..; \
+		fi; \
+	done
+	@echo ""
+	@echo "✅ All repositories updated"
