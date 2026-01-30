@@ -28,6 +28,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: backend
     container_name: backend
     ports:
@@ -54,8 +56,8 @@ services:
     build:
       context: ./prompted-seg-service
       dockerfile: Dockerfile
-      ssh:
-        - default
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: prompted-seg-service
     container_name: prompted-seg-service
     ports:
@@ -100,8 +102,8 @@ services:
     build:
       context: ./instance-discovery-service
       dockerfile: Dockerfile
-      ssh:
-        - default
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: instance-discovery-service
     container_name: instance-discovery-service
     ports:
