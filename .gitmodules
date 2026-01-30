@@ -1,17 +1,17 @@
 [submodule "coral-back"]
 	path = coral-back
-	url = https://github.com/yapat-app/coral-back.git
+	url = https://github.com/Iquana-tool/backend.git
 	branch = improvement/review_status
 [submodule "coral-front"]
 	path = coral-front
-	url = https://github.com/yapat-app/coral-front.git
+	url = https://github.com/Iquana-tool/frontend-react.git
 	branch = migration/Version2
 [submodule "coral-completion-seg"]
 	path = coral-completion-seg
-	url = https://github.com/yapat-app/coral-completion-seg.git
+	url = https://github.com/Iquana-tool/instance-discovery-service.git
 [submodule "coral-prompted-seg"]
 	path = coral-prompted-seg
-	url = https://github.com/yapat-app/coral-prompted-seg.git
+	url = https://github.com/Iquana-tool/prompted-seg-service.git
 [submodule "coral-semantic-seg"]
 	path = coral-semantic-seg
-	url = https://github.com/yapat-app/coral-semantic-seg.git
+	url = https://github.com/Iquana-tool/semantic-seg-service.git

@@ -18,8 +18,8 @@ This repository orchestrates the following services:
 
 ```bash
 # Clone with all submodules
-git clone --recurse-submodules https://github.com/yapat-app/coral-annotation-tool.git
-cd coral-annotation-tool
+git clone --recurse-submodules https://github.com/Iquana-tool/iquana-tool.git
+cd iquana-tool
 
 # Or if you already cloned without submodules:
 git submodule update --init --recursive
