@@ -46,6 +46,9 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4000,http://localhost:4003}
+      - PROMPTED_SEGMENTATION_BACKEND_URL=http://prompted-seg-service:8001
+      - SEMANTIC_SEGMENTATION_BACKEND_URL=http://semantic-seg-service:8002
+      - COMPLETION_SEGMENTATION_BACKEND_URL=http://instance-discovery-service:8003
     networks:
       - coral-network
     restart: unless-stopped
@@ -102,7 +105,7 @@ services:
     networks:
       - coral-network
     restart: unless-stopped
-    command: uv run uvicorn main:app --host 0.0.0.0 --port 7000
+    command: uv run uvicorn main:app --host 0.0.0.0 --port 8002
 
   semantic-worker:
     image: semantic-seg-service
