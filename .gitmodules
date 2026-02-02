@@ -5,7 +5,7 @@
 [submodule "frontend-react"]
 	path = frontend-react
 	url = https://github.com/Iquana-tool/frontend-react.git
-	branch = migration/Version2
+	branch = main
 [submodule "instance-discovery-service"]
 	path = instance-discovery-service
 	url = https://github.com/Iquana-tool/instance-discovery-service.git

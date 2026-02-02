@@ -34,6 +34,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: backend
     container_name: backend
     ports:
@@ -60,6 +62,8 @@ services:
   prompted-seg-service:
     build:
       context: ./prompted-seg-service
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: prompted-seg-service
     container_name: prompted-seg-service
     environment:
@@ -70,24 +74,26 @@ services:
     restart: unless-stopped
     command: uv run fastapi run main.py --port 8001
 
-  prompted-worker:
-    image: prompted-seg-service # Reuses the image built above
-    container_name: prompted-worker
-    environment:
-      - REDIS_URL=redis://redis:6379
-    networks:
-      - coral-network
-    restart: unless-stopped
-    # -Q defines the queue, -c 1 limits to 1 simultaneous heavy task
-    command: uv run celery -A app.services.celery_app.celery worker -Q prompted_queue -c 1 --loglevel=info
-    depends_on:
-      - redis
-      - prompted-seg-service
+  # prompted-worker:
+  #   image: prompted-seg-service # Reuses the image built above
+  #   container_name: prompted-worker
+  #   environment:
+  #     - REDIS_URL=redis://redis:6379
+  #   networks:
+  #     - coral-network
+  #   restart: unless-stopped
+  #   # -Q defines the queue, -c 1 limits to 1 simultaneous heavy task
+  #   command: uv run celery -A app.services.celery_app.celery worker -Q prompted_queue -c 1 --loglevel=info
+  #   depends_on:
+  #     - redis
+  #     - prompted-seg-service
 
   # 2. Semantic Segmentation
   semantic-seg-service:
     build:
       context: ./semantic-seg-service
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: semantic-seg-service
     container_name: semantic-seg-service
     environment:
@@ -96,7 +102,7 @@ services:
     networks:
       - coral-network
     restart: unless-stopped
-    command: uvicorn main:app --host 0.0.0.0 --port 7000
+    command: uv run uvicorn main:app --host 0.0.0.0 --port 7000
 
   semantic-worker:
     image: semantic-seg-service
@@ -115,6 +121,8 @@ services:
   instance-discovery-service:
     build:
       context: ./instance-discovery-service
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: instance-discovery-service
     container_name: instance-discovery-service
     environment:
@@ -125,18 +133,18 @@ services:
     restart: unless-stopped
     command: uv run uvicorn main:app --host 0.0.0.0 --port 8003
 
-  discovery-worker:
-    image: instance-discovery-service
-    container_name: discovery-worker
-    environment:
-      - REDIS_URL=redis://redis:6379
-    networks:
-      - coral-network
-    restart: unless-stopped
-    command: uv run celery -A app.services.celery_app.celery worker -Q discovery_queue -c 1 --loglevel=info
-    depends_on:
-      - redis
-      - instance-discovery-service
+  # discovery-worker:
+  #   image: instance-discovery-service
+  #   container_name: discovery-worker
+  #   environment:
+  #     - REDIS_URL=redis://redis:6379
+  #   networks:
+  #     - coral-network
+  #   restart: unless-stopped
+  #   command: uv run celery -A app.services.celery_app.celery worker -Q discovery_queue -c 1 --loglevel=info
+  #   depends_on:
+  #     - redis
+  #     - instance-discovery-service
 
 volumes:
   coral-data:
