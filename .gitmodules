@@ -1,7 +1,7 @@
 [submodule "backend"]
 	path = backend
 	url = https://github.com/Iquana-tool/backend.git
-	branch = main
+	branch = feature/semantic_seg_training
 [submodule "frontend-react"]
 	path = frontend-react
 	url = https://github.com/Iquana-tool/frontend-react.git
