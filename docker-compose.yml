@@ -1,4 +1,35 @@
 services:
+  # Redis Broker
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - coral-network
+    restart: unless-stopped
+
+  # Celery Worker
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: backend-celery  # Reuses the backend image
+    container_name: celery-worker
+    volumes:
+      - coral-data:/data
+      - ./backend/logs:/app/logs
+    environment:
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - coral-network
+    restart: unless-stopped
+    # Replace 'worker.celery_app' with the path to your Celery instance
+    command: uv run celery -A app.services.celery_app.celery worker --loglevel=info
+    depends_on:
+      - redis
+      - backend
+
   # Frontend - React Application
   frontend-react:
     build:
@@ -42,6 +73,7 @@ services:
       - PROMPTED_SEGMENTATION_BACKEND_URL=${PROMPTED_SEGMENTATION_BACKEND_URL:-http://prompted-seg-service:8001}
       - AUTOMATIC_SEGMENTATION_BACKEND_URL=${AUTOMATIC_SEGMENTATION_BACKEND_URL:-http://semantic-seg-service:7000}
       - COMPLETION_SEGMENTATION_BACKEND_URL=${COMPLETION_SEGMENTATION_BACKEND_URL:-http://instance-discovery-service:8003}
+      - REDIS_URL=redis://redis:6379
     networks:
       - coral-network
     restart: unless-stopped
@@ -50,6 +82,7 @@ services:
       - prompted-seg-service
       - semantic-seg-service
       - instance-discovery-service
+      - redis
 
   # Prompted Segmentation Service (Internal Only)
   prompted-seg-service:
@@ -96,6 +129,8 @@ services:
       - coral-network
     restart: unless-stopped
     command: uvicorn main:app --host 0.0.0.0 --port 7000
+    depends_on:
+      - redis
 
   # Completion Segmentation Service (Internal Only)
   instance-discovery-service:
