@@ -1,5 +1,5 @@
 services:
-  # Redis Broker
+  # --- INFRASTRUCTURE ---
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -9,41 +9,19 @@ services:
       - coral-network
     restart: unless-stopped
 
-  # Celery Worker
-  celery-worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    image: backend-celery  # Reuses the backend image
-    container_name: celery-worker
-    volumes:
-      - coral-data:/data
-      - ./backend/logs:/app/logs
-    environment:
-      - REDIS_URL=redis://redis:6379
-    networks:
-      - coral-network
-    restart: unless-stopped
-    # Replace 'worker.celery_app' with the path to your Celery instance
-    command: uv run celery -A app.services.celery_app.celery worker --loglevel=info
-    depends_on:
-      - redis
-      - backend
-
-  # Frontend - React Application
+  # --- FRONTEND & BACKEND ---
   frontend-react:
     build:
       context: ./frontend-react
       dockerfile: Dockerfile
       args:
-       
         - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-http://localhost:4001}
         - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://localhost:4001}
         - PUBLIC_URL=${PUBLIC_URL:-/}
     image: frontend-react
     container_name: frontend-react
     ports:
-      - "4000:3000"  # Frontend on port 4000
+      - "4000:3000"
     environment:
       - NODE_ENV=production
     networks:
@@ -51,111 +29,114 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
-    labels:
-      - "authors=dev-team"
 
-  # Backend API - Main Application Backend
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      args:
-        - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: backend
     container_name: backend
     ports:
-      - "4001:8000"  # Backend on port 4001
+      - "4001:8000"
     volumes:
       - coral-data:/data
       - ./backend/logs:/app/logs
     environment:
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4000,http://localhost:4003}
-      - PROMPTED_SEGMENTATION_BACKEND_URL=${PROMPTED_SEGMENTATION_BACKEND_URL:-http://prompted-seg-service:8001}
-      - AUTOMATIC_SEGMENTATION_BACKEND_URL=${AUTOMATIC_SEGMENTATION_BACKEND_URL:-http://semantic-seg-service:7000}
-      - COMPLETION_SEGMENTATION_BACKEND_URL=${COMPLETION_SEGMENTATION_BACKEND_URL:-http://instance-discovery-service:8003}
       - REDIS_URL=redis://redis:6379
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4000,http://localhost:4003}
     networks:
       - coral-network
     restart: unless-stopped
     command: uv run uvicorn main:app --host 0.0.0.0 --port 8000
     depends_on:
+      - redis
       - prompted-seg-service
       - semantic-seg-service
       - instance-discovery-service
-      - redis
 
-  # Prompted Segmentation Service (Internal Only)
+  # --- AI SERVICES & THEIR DEDICATED WORKERS ---
+
+  # 1. Prompted Segmentation
   prompted-seg-service:
     build:
       context: ./prompted-seg-service
-      dockerfile: Dockerfile
-      args:
-        - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: prompted-seg-service
     container_name: prompted-seg-service
-    ports:
-      - "4002:8001"  # Prompted segmentation service on port 4002
-    volumes:
-      - coral-data:/data
-      - ./prompted-seg-service/weights:/app/weights
-      - ./prompted-seg-service/configs:/app/configs
-      - ./prompted-seg-service/logs:/app/logs
     environment:
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4001,http://localhost:4000}
-      - PORT=${PROMPTED_PORT:-8001}
-      - LOG_DIR=/app/logs
-      - HYDRA_CONFIGS_DIR=/app/configs
+      - REDIS_URL=redis://redis:6379
+      - PORT=8001
     networks:
       - coral-network
     restart: unless-stopped
     command: uv run fastapi run main.py --port 8001
 
-  # Semantic/Automatic Segmentation Service (Internal Only)
+  prompted-worker:
+    image: prompted-seg-service # Reuses the image built above
+    container_name: prompted-worker
+    environment:
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - coral-network
+    restart: unless-stopped
+    # -Q defines the queue, -c 1 limits to 1 simultaneous heavy task
+    command: uv run celery -A app.services.celery_app.celery worker -Q prompted_queue -c 1 --loglevel=info
+    depends_on:
+      - redis
+      - prompted-seg-service
+
+  # 2. Semantic Segmentation
   semantic-seg-service:
     build:
       context: ./semantic-seg-service
-      dockerfile: Dockerfile
     image: semantic-seg-service
     container_name: semantic-seg-service
-    ports:
-      - "4003:7000"  # Semantic segmentation service on port 4003
-    volumes:
-      - coral-data:/data
-      - ./semantic-seg-service/logs:/app/logs
     environment:
+      - REDIS_URL=redis://redis:6379
       - PYTHONUNBUFFERED=1
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4001,http://localhost:4000}
     networks:
       - coral-network
     restart: unless-stopped
     command: uvicorn main:app --host 0.0.0.0 --port 7000
+
+  semantic-worker:
+    image: semantic-seg-service
+    container_name: semantic-worker
+    environment:
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - coral-network
+    restart: unless-stopped
+    command: uv run celery -A app.services.celery_app.celery worker -Q semantic_queue -c 1 --loglevel=info
     depends_on:
       - redis
+      - semantic-seg-service
 
-  # Completion Segmentation Service (Internal Only)
+  # 3. Instance Discovery
   instance-discovery-service:
     build:
       context: ./instance-discovery-service
-      dockerfile: Dockerfile
-      args:
-        - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: instance-discovery-service
     container_name: instance-discovery-service
-    ports:
-      - "4004:8003"  # Instance discovery service on port 4004
-    volumes:
-      - coral-data:/data
-      - ./instance-discovery-service/weights:/app/weights
-      - ./instance-discovery-service/logs:/app/logs
     environment:
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4001,http://localhost:4000}
-      - PORT=${COMPLETION_PORT:-8003}
-      - LOG_DIR=/app/logs
+      - REDIS_URL=redis://redis:6379
       - HF_ACCESS_TOKEN=${HF_ACCESS_TOKEN}
     networks:
       - coral-network
     restart: unless-stopped
     command: uv run uvicorn main:app --host 0.0.0.0 --port 8003
+
+  discovery-worker:
+    image: instance-discovery-service
+    container_name: discovery-worker
+    environment:
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - coral-network
+    restart: unless-stopped
+    command: uv run celery -A app.services.celery_app.celery worker -Q discovery_queue -c 1 --loglevel=info
+    depends_on:
+      - redis
+      - instance-discovery-service
 
 volumes:
   coral-data:
