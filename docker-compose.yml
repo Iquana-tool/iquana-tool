@@ -69,6 +69,10 @@ services:
         - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: prompted-seg-service
     container_name: prompted-seg-service
+    volumes:
+      - coral-data:/data
+      - ./prompted-seg-service/weights:/app/weights
+      - ./prompted-seg-service/configs:/app/configs
     environment:
       - REDIS_URL=redis://redis:6379
       - PORT=8001
@@ -99,6 +103,8 @@ services:
         - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: semantic-seg-service
     container_name: semantic-seg-service
+    volumes:
+      - coral-data:/data
     environment:
       - REDIS_URL=redis://redis:6379
       - PYTHONUNBUFFERED=1
@@ -110,6 +116,8 @@ services:
   semantic-worker:
     image: semantic-seg-service
     container_name: semantic-worker
+    volumes:
+      - coral-data:/data
     environment:
       - REDIS_URL=redis://redis:6379
     networks:
@@ -128,9 +136,15 @@ services:
         - GITHUB_TOKEN=${GITHUB_TOKEN}
     image: instance-discovery-service
     container_name: instance-discovery-service
+    volumes:
+      - coral-data:/data
+      - ./instance-discovery-service/weights:/app/weights
+      - hf-cache:/root/.cache/huggingface
     environment:
       - REDIS_URL=redis://redis:6379
       - HF_ACCESS_TOKEN=${HF_ACCESS_TOKEN}
+      - HF_HOME=/root/.cache/huggingface
+      - TRANSFORMERS_CACHE=/root/.cache/huggingface/transformers
     networks:
       - coral-network
     restart: unless-stopped
@@ -151,6 +165,8 @@ services:
 
 volumes:
   coral-data:
+    driver: local
+  hf-cache:
     driver: local
 
 networks:
