@@ -4,7 +4,7 @@ services:
     image: redis:7-alpine
     container_name: redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT}:6379"
     networks:
       - coral-network
     restart: unless-stopped
@@ -15,13 +15,13 @@ services:
       context: ./frontend-react
       dockerfile: Dockerfile
       args:
-        - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL:-http://localhost:4001}
-        - REACT_APP_WS_URL=${REACT_APP_WS_URL:-ws://localhost:4001}
+        - REACT_APP_API_BASE_URL=:${BACKEND_PORT}
+        - REACT_APP_WS_URL=:${BACKEND_PORT}
         - PUBLIC_URL=${PUBLIC_URL:-/}
     image: frontend-react
     container_name: frontend-react
     ports:
-      - "4000:3000"
+      - "${FRONTEND_PORT}:3000"
     environment:
       - NODE_ENV=production
     networks:
@@ -39,20 +39,20 @@ services:
     image: backend
     container_name: backend
     ports:
-      - "4001:8000"
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
     volumes:
       - coral-data:/data
       - ./backend/logs:/app/logs
     environment:
-      - REDIS_URL=redis://redis:6379
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:4000,http://localhost:4003}
-      - PROMPTED_SEGMENTATION_BACKEND_URL=http://prompted-seg-service:8001
-      - SEMANTIC_SEGMENTATION_BACKEND_URL=http://semantic-seg-service:8002
-      - COMPLETION_SEGMENTATION_BACKEND_URL=http://instance-discovery-service:8003
+      - REDIS_URL=redis://redis:${REDIS_PORT}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:${FRONTEND_PORT},:${FRONTEND_PORT}}
+      - PROMPTED_SEGMENTATION_BACKEND_URL=http://prompted-seg-service:${PROMPTED_SEG_PORT}
+      - SEMANTIC_SEGMENTATION_BACKEND_URL=http://semantic-seg-service:${SEMANTIC_SEG_PORT}
+      - COMPLETION_SEGMENTATION_BACKEND_URL=http://instance-discovery-service:${INSTANCE_DISC_PORT}
     networks:
       - coral-network
     restart: unless-stopped
-    command: uv run uvicorn main:app --host 0.0.0.0 --port 8000
+    command: uv run --upgrade fastapi run main.py --port ${BACKEND_PORT}
     depends_on:
       - redis
       - prompted-seg-service
@@ -74,18 +74,18 @@ services:
       - ./prompted-seg-service/weights:/app/weights
       - ./prompted-seg-service/configs:/app/configs
     environment:
-      - REDIS_URL=redis://redis:6379
-      - PORT=8001
+      - REDIS_URL=redis://redis:${REDIS_PORT}
+      - PORT=${PROMPTED_SEG_PORT}
     networks:
       - coral-network
     restart: unless-stopped
-    command: uv run fastapi run main.py --port 8001
+    command: uv run --upgrade fastapi run main.py --port ${PROMPTED_SEG_PORT}
 
   # prompted-worker:
   #   image: prompted-seg-service # Reuses the image built above
   #   container_name: prompted-worker
   #   environment:
-  #     - REDIS_URL=redis://redis:6379
+  #     - REDIS_URL=redis://redis:${REDIS_PORT}
   #   networks:
   #     - coral-network
   #   restart: unless-stopped
@@ -106,12 +106,12 @@ services:
     volumes:
       - coral-data:/data
     environment:
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://redis:${REDIS_PORT}
       - PYTHONUNBUFFERED=1
     networks:
       - coral-network
     restart: unless-stopped
-    command: uv run uvicorn main:app --host 0.0.0.0 --port 8002
+    command: uv run --upgrade fastapi run main.py --host localhost --port ${SEMANTIC_SEG_PORT}
 
   semantic-worker:
     image: semantic-seg-service
@@ -119,7 +119,7 @@ services:
     volumes:
       - coral-data:/data
     environment:
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://redis:${REDIS_PORT}
     networks:
       - coral-network
     restart: unless-stopped
@@ -141,20 +141,20 @@ services:
       - ./instance-discovery-service/weights:/app/weights
       - hf-cache:/root/.cache/huggingface
     environment:
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://redis:${REDIS_PORT}
       - HF_ACCESS_TOKEN=${HF_ACCESS_TOKEN}
       - HF_HOME=/root/.cache/huggingface
       - TRANSFORMERS_CACHE=/root/.cache/huggingface/transformers
     networks:
       - coral-network
     restart: unless-stopped
-    command: uv run uvicorn main:app --host 0.0.0.0 --port 8003
+    command: uv run --upgrade fastapi run main.py --port ${INSTANCE_DISC_PORT}
 
   # discovery-worker:
   #   image: instance-discovery-service
   #   container_name: discovery-worker
   #   environment:
-  #     - REDIS_URL=redis://redis:6379
+  #     - REDIS_URL=redis://redis:${REDIS_PORT}
   #   networks:
   #     - coral-network
   #   restart: unless-stopped
