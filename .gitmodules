@@ -1,7 +1,7 @@
 [submodule "backend"]
-	path = backend
+	path = backend 
 	url = https://github.com/Iquana-tool/backend.git
-	branch = feature/semantic_seg_training
+	branch = main
 [submodule "frontend-react"]
 	path = frontend-react
 	url = https://github.com/Iquana-tool/frontend-react.git
@@ -9,9 +9,12 @@
 [submodule "instance-discovery-service"]
 	path = instance-discovery-service
 	url = https://github.com/Iquana-tool/instance-discovery-service.git
+	branch = main
 [submodule "prompted-seg-service"]
 	path = prompted-seg-service
 	url = https://github.com/Iquana-tool/prompted-seg-service.git
+	branch = main
 [submodule "semantic-seg-service"]
 	path = semantic-seg-service
 	url = https://github.com/Iquana-tool/semantic-seg-service.git
+	branch = main
