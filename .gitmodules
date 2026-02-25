@@ -1,5 +1,5 @@
 [submodule "backend"]
-	path = backend 
+	path = backend
 	url = https://github.com/Iquana-tool/backend.git
 	branch = main
 [submodule "frontend-react"]
