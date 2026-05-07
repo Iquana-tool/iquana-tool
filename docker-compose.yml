@@ -17,10 +17,11 @@ services:
     volumes:
       - mlflow-data:/mlflow
     environment:
-      - MLFLOW_TRACKING_URI=http://localhost:${MLFLOW_PORT}
+      - MLFLOW_TRACKING_URI=http://localhost:5000
     networks:
       - coral-network
     restart: unless-stopped
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:////mlflow/mlflow.db --default-artifact-root /mlflow
 
   # --- FRONTEND & BACKEND ---
   frontend-react:
@@ -57,9 +58,9 @@ services:
       - coral-data:/data
       - ./backend/logs:/app/logs
     environment:
-      - REDIS_URL=redis://redis:${REDIS_PORT}
-      - MLFLOW_URL=http://mlflow:${MLFLOW_PORT}
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:${FRONTEND_PORT},:${FRONTEND_PORT}}
+      - REDIS_URL=redis://redis:6379
+      - MLFLOW_URL=http://mlflow:5000
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:${FRONTEND_PORT}}
       - PROMPTED_SEGMENTATION_BACKEND_URL=http://prompted-seg-service:${PROMPTED_SEG_PORT}
       - SEMANTIC_SEGMENTATION_BACKEND_URL=http://semantic-seg-service:${SEMANTIC_SEG_PORT}
       - COMPLETION_SEGMENTATION_BACKEND_URL=http://instance-discovery-service:${INSTANCE_DISC_PORT}
@@ -88,8 +89,8 @@ services:
       - ./prompted-seg-service/weights:/app/weights
       - ./prompted-seg-service/configs:/app/configs
     environment:
-      - REDIS_URL=redis://redis:${REDIS_PORT}
-      - MLFLOW_URL=http://mlflow:${MLFLOW_PORT}
+      - REDIS_URL=redis://redis:6379
+      - MLFLOW_URL=http://mlflow:5000
       - PORT=${PROMPTED_SEG_PORT}
     networks:
       - coral-network
@@ -100,7 +101,7 @@ services:
   #   image: prompted-seg-service # Reuses the image built above
   #   container_name: prompted-worker
   #   environment:
-  #     - REDIS_URL=redis://redis:${REDIS_PORT}
+  #     - REDIS_URL=redis://redis:6379
   #   networks:
   #     - coral-network
   #   restart: unless-stopped
@@ -121,8 +122,8 @@ services:
     volumes:
       - coral-data:/data
     environment:
-      - REDIS_URL=redis://redis:${REDIS_PORT}
-      - MLFLOW_URL=http://mlflow:${MLFLOW_PORT}
+      - REDIS_URL=redis://redis:6379
+      - MLFLOW_URL=http://mlflow:5000
       - PYTHONUNBUFFERED=1
     networks:
       - coral-network
@@ -135,8 +136,8 @@ services:
     volumes:
       - coral-data:/data
     environment:
-      - REDIS_URL=redis://redis:${REDIS_PORT}
-      - MLFLOW_URL=http://mlflow:${MLFLOW_PORT}
+      - REDIS_URL=redis://redis:6379
+      - MLFLOW_URL=http://mlflow:5000
     networks:
       - coral-network
     restart: unless-stopped
@@ -158,8 +159,8 @@ services:
       - ./instance-discovery-service/weights:/app/weights
       - hf-cache:/root/.cache/huggingface
     environment:
-      - REDIS_URL=redis://redis:${REDIS_PORT}
-      - MLFLOW_URL=http://mlflow:${MLFLOW_PORT}
+      - REDIS_URL=redis://redis:6379
+      - MLFLOW_URL=http://mlflow:5000
       - HF_ACCESS_TOKEN=${HF_ACCESS_TOKEN}
       - HF_HOME=/root/.cache/huggingface
       - TRANSFORMERS_CACHE=/root/.cache/huggingface/transformers
@@ -172,7 +173,7 @@ services:
   #   image: instance-discovery-service
   #   container_name: discovery-worker
   #   environment:
-  #     - REDIS_URL=redis://redis:${REDIS_PORT}
+  #     - REDIS_URL=redis://redis:6379
   #   networks:
   #     - coral-network
   #   restart: unless-stopped
@@ -183,6 +184,8 @@ services:
 
 volumes:
   coral-data:
+    driver: local
+  mlflow-data:
     driver: local
   hf-cache:
     driver: local
