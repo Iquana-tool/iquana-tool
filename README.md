@@ -1,6 +1,6 @@
-# Coral Annotation Tool
+# IQUANA Tool
 
-A super repository that combines all services required for the Coral annotation tool as git submodules.
+A super repository that combines all services required for the IQUANA tool as git submodules.
 
 ## Overview
 
@@ -11,6 +11,8 @@ This repository orchestrates the following services:
 - **prompted-seg-service**: Prompted segmentation service using SAM models (Port 4002)
 - **semantic-seg-service**: Semantic/automatic segmentation service (Port 4003)
 - **instance-discovery-service**: Completion segmentation service (Port 4004)
+- **celery instances**: Task distribution queue for service that run long running tasks
+- **redis**: Message broker for celery (Port 6379)
 
 ## Getting Started
 
