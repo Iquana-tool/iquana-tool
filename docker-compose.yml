@@ -9,6 +9,19 @@ services:
       - coral-network
     restart: unless-stopped
 
+  mlflow:
+    image: mlflow:latest
+    container_name: mlflow
+    ports:
+      - "${MLFLOW_PORT}:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    environment:
+      - MLFLOW_TRACKING_URI=http://localhost:${MLFLOW_PORT}
+    networks:
+      - coral-network
+    restart: unless-stopped
+
   # --- FRONTEND & BACKEND ---
   frontend-react:
     build:
@@ -45,6 +58,7 @@ services:
       - ./backend/logs:/app/logs
     environment:
       - REDIS_URL=redis://redis:${REDIS_PORT}
+      - MLFLOW_URL=http://mlflow:${MLFLOW_PORT}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:${FRONTEND_PORT},:${FRONTEND_PORT}}
       - PROMPTED_SEGMENTATION_BACKEND_URL=http://prompted-seg-service:${PROMPTED_SEG_PORT}
       - SEMANTIC_SEGMENTATION_BACKEND_URL=http://semantic-seg-service:${SEMANTIC_SEG_PORT}
@@ -75,6 +89,7 @@ services:
       - ./prompted-seg-service/configs:/app/configs
     environment:
       - REDIS_URL=redis://redis:${REDIS_PORT}
+      - MLFLOW_URL=http://mlflow:${MLFLOW_PORT}
       - PORT=${PROMPTED_SEG_PORT}
     networks:
       - coral-network
@@ -107,6 +122,7 @@ services:
       - coral-data:/data
     environment:
       - REDIS_URL=redis://redis:${REDIS_PORT}
+      - MLFLOW_URL=http://mlflow:${MLFLOW_PORT}
       - PYTHONUNBUFFERED=1
     networks:
       - coral-network
@@ -120,6 +136,7 @@ services:
       - coral-data:/data
     environment:
       - REDIS_URL=redis://redis:${REDIS_PORT}
+      - MLFLOW_URL=http://mlflow:${MLFLOW_PORT}
     networks:
       - coral-network
     restart: unless-stopped
@@ -142,6 +159,7 @@ services:
       - hf-cache:/root/.cache/huggingface
     environment:
       - REDIS_URL=redis://redis:${REDIS_PORT}
+      - MLFLOW_URL=http://mlflow:${MLFLOW_PORT}
       - HF_ACCESS_TOKEN=${HF_ACCESS_TOKEN}
       - HF_HOME=/root/.cache/huggingface
       - TRANSFORMERS_CACHE=/root/.cache/huggingface/transformers
