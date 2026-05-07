@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
 
   mlflow:
-    image: mlflow:latest
+    image: ghcr.io/mlflow/mlflow:latest
     container_name: mlflow
     ports:
       - "${MLFLOW_PORT}:5000"
