@@ -29,8 +29,9 @@ services:
       --port 5000
       --allowed-hosts ${MLFLOW_ALLOWED_HOSTS:-mlflow:5000,mlflow,localhost:5000,localhost,127.0.0.1:5000,127.0.0.1}
       --cors-allowed-origins ${MLFLOW_CORS_ALLOWED_ORIGINS:-http://localhost:${FRONTEND_PORT},http://localhost:${BACKEND_PORT},http://localhost:${PROMPTED_SEG_PORT},http://localhost:${SEMANTIC_SEG_PORT},http://localhost:${INSTANCE_DISC_PORT},http://localhost:${MLFLOW_PORT}}
+      --serve-artifacts
+      --artifacts-destination /mlflow
       --backend-store-uri sqlite:////mlflow/mlflow.db
-      --default-artifact-root /mlflow
 
   # --- FRONTEND & BACKEND ---
   frontend-react:
@@ -66,6 +67,7 @@ services:
     volumes:
       - iquana-data:/data
       - ./backend/logs:/app/logs
+      - mlflow-data:/mlflow
     environment:
       - REDIS_URL=redis://redis:6379
       - MLFLOW_URL=http://mlflow:5000
@@ -80,6 +82,7 @@ services:
     command: uv run --upgrade fastapi run main.py --port ${BACKEND_PORT}
     depends_on:
       - redis
+      - mlflow
       - prompted-seg-service
       - semantic-seg-service
       - instance-discovery-service
@@ -98,6 +101,7 @@ services:
       - iquana-data:/data
       - ./prompted-seg-service/weights:/app/weights
       - ./prompted-seg-service/configs:/app/configs
+      - mlflow-data:/mlflow
     environment:
       - REDIS_URL=redis://redis:6379
       - MLFLOW_URL=http://mlflow:5000
@@ -131,6 +135,7 @@ services:
     container_name: semantic-seg-service
     volumes:
       - iquana-data:/data
+      - mlflow-data:/mlflow
     environment:
       - REDIS_URL=redis://redis:6379
       - MLFLOW_URL=http://mlflow:5000
@@ -145,6 +150,7 @@ services:
     container_name: semantic-worker
     volumes:
       - iquana-data:/data
+      - mlflow-data:/mlflow
     environment:
       - REDIS_URL=redis://redis:6379
       - MLFLOW_URL=http://mlflow:5000
@@ -168,6 +174,7 @@ services:
       - iquana-data:/data
       - ./instance-discovery-service/weights:/app/weights
       - hf-cache:/root/.cache/huggingface
+      - mlflow-data:/mlflow
     environment:
       - REDIS_URL=redis://redis:6379
       - MLFLOW_URL=http://mlflow:5000
