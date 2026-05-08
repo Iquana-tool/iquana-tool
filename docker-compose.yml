@@ -69,7 +69,7 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - MLFLOW_URL=http://mlflow:5000
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:${FRONTEND_PORT}}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://frontend-react:${FRONTEND_PORT}}
       - PROMPTED_SEGMENTATION_BACKEND_URL=http://prompted-seg-service:${PROMPTED_SEG_PORT}
       - SEMANTIC_SEGMENTATION_BACKEND_URL=http://semantic-seg-service:${SEMANTIC_SEG_PORT}
       - COMPLETION_SEGMENTATION_BACKEND_URL=http://instance-discovery-service:${INSTANCE_DISC_PORT}
