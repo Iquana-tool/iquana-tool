@@ -6,7 +6,7 @@ services:
     ports:
       - "${REDIS_PORT}:6379"
     networks:
-      - coral-network
+      - iquana-network
     restart: unless-stopped
 
   mlflow:
@@ -21,7 +21,7 @@ services:
       - MLFLOW_SERVER_ALLOWED_HOSTS=${MLFLOW_ALLOWED_HOSTS:-localhost,mlflow,backend,prompted-seg-service,semantic-seg-service,instance-discovery-service}
       - MLFLOW_SERVER_CORS_ALLOWED_ORIGINS=${MLFLOW_CORS_ALLOWED_ORIGINS:-http://localhost:${FRONTEND_PORT},http://localhost:${BACKEND_PORT},http://localhost:${PROMPTED_SEG_PORT},http://localhost:${SEMANTIC_SEG_PORT},http://localhost:${INSTANCE_DISC_PORT},http://localhost:${MLFLOW_PORT}}
     networks:
-      - coral-network
+      - iquana-network
     restart: unless-stopped
     command: >
       mlflow server
@@ -48,7 +48,7 @@ services:
     environment:
       - NODE_ENV=production
     networks:
-      - coral-network
+      - iquana-network
     restart: unless-stopped
     depends_on:
       - backend
@@ -74,7 +74,7 @@ services:
       - SEMANTIC_SEGMENTATION_BACKEND_URL=http://semantic-seg-service:${SEMANTIC_SEG_PORT}
       - COMPLETION_SEGMENTATION_BACKEND_URL=http://instance-discovery-service:${INSTANCE_DISC_PORT}
     networks:
-      - coral-network
+      - iquana-network
     restart: unless-stopped
     command: uv run --upgrade fastapi run main.py --port ${BACKEND_PORT}
     depends_on:
@@ -102,7 +102,7 @@ services:
       - MLFLOW_URL=http://mlflow:5000
       - PORT=${PROMPTED_SEG_PORT}
     networks:
-      - coral-network
+      - iquana-network
     restart: unless-stopped
     command: uv run --upgrade fastapi run main.py --port ${PROMPTED_SEG_PORT}
 
@@ -112,7 +112,7 @@ services:
   #   environment:
   #     - REDIS_URL=redis://redis:6379
   #   networks:
-  #     - coral-network
+  #     - iquana-network
   #   restart: unless-stopped
   #   # -Q defines the queue, -c 1 limits to 1 simultaneous heavy task
   #   command: uv run celery -A app.services.celery_app.celery worker -Q prompted_queue -c 1 --loglevel=info
@@ -135,7 +135,7 @@ services:
       - MLFLOW_URL=http://mlflow:5000
       - PYTHONUNBUFFERED=1
     networks:
-      - coral-network
+      - iquana-network
     restart: unless-stopped
     command: uv run --upgrade fastapi run main.py --port ${SEMANTIC_SEG_PORT}
 
@@ -148,7 +148,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - MLFLOW_URL=http://mlflow:5000
     networks:
-      - coral-network
+      - iquana-network
     restart: unless-stopped
     command: uv run celery -A celery_app.celery_app worker -Q semantic_queue -c 1 --loglevel=info
     depends_on:
@@ -174,7 +174,7 @@ services:
       - HF_HOME=/root/.cache/huggingface
       - TRANSFORMERS_CACHE=/root/.cache/huggingface/transformers
     networks:
-      - coral-network
+      - iquana-network
     restart: unless-stopped
     command: uv run --upgrade fastapi run main.py --port ${INSTANCE_DISC_PORT}
 
@@ -184,7 +184,7 @@ services:
   #   environment:
   #     - REDIS_URL=redis://redis:6379
   #   networks:
-  #     - coral-network
+  #     - iquana-network
   #   restart: unless-stopped
   #   command: uv run celery -A app.services.celery_app.celery worker -Q discovery_queue -c 1 --loglevel=info
   #   depends_on:
@@ -200,5 +200,5 @@ volumes:
     driver: local
 
 networks:
-  coral-network:
+  iquana-network:
     driver: bridge
