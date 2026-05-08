@@ -64,7 +64,7 @@ services:
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     volumes:
-      - coral-data:/data
+      - iquana-data:/data
       - ./backend/logs:/app/logs
     environment:
       - REDIS_URL=redis://redis:6379
@@ -94,7 +94,7 @@ services:
     image: prompted-seg-service
     container_name: prompted-seg-service
     volumes:
-      - coral-data:/data
+      - iquana-data:/data
       - ./prompted-seg-service/weights:/app/weights
       - ./prompted-seg-service/configs:/app/configs
     environment:
@@ -129,7 +129,7 @@ services:
     image: semantic-seg-service
     container_name: semantic-seg-service
     volumes:
-      - coral-data:/data
+      - iquana-data:/data
     environment:
       - REDIS_URL=redis://redis:6379
       - MLFLOW_URL=http://mlflow:5000
@@ -143,7 +143,7 @@ services:
     image: semantic-seg-service
     container_name: semantic-worker
     volumes:
-      - coral-data:/data
+      - iquana-data:/data
     environment:
       - REDIS_URL=redis://redis:6379
       - MLFLOW_URL=http://mlflow:5000
@@ -164,7 +164,7 @@ services:
     image: instance-discovery-service
     container_name: instance-discovery-service
     volumes:
-      - coral-data:/data
+      - iquana-data:/data
       - ./instance-discovery-service/weights:/app/weights
       - hf-cache:/root/.cache/huggingface
     environment:
@@ -192,7 +192,7 @@ services:
   #     - instance-discovery-service
 
 volumes:
-  coral-data:
+  iquana-data:
     driver: local
   mlflow-data:
     driver: local
