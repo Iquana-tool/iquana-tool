@@ -1,0 +1,8 @@
+# The installer and the service-control script must keep LF endings: a CRLF
+# shebang makes every shell reject them with "bad interpreter: /bin/bash^M".
+# This matters because the repository is maintained from Windows.
+*.sh text eol=lf
+
+# GitHub issue forms are parsed as YAML; keep them normalised too.
+*.yml text eol=lf
+*.yaml text eol=lf

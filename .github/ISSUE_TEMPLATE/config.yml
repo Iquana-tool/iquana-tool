@@ -1,0 +1,13 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Collaboration, research or larger feature requests
+    url: mailto:robert.leist@dfki.de
+    about: >-
+      Want to bring IQUANA to your domain, collaborate on research, or discuss a
+      feature that goes beyond a single issue? Write to us directly — we are a small
+      team and a short conversation usually gets you further than a ticket.
+  - name: Installation help and usage questions
+    url: https://github.com/Iquana-tool/iquana-tool#readme
+    about: >-
+      Trouble installing or starting IQUANA? Check the README first — it covers the
+      prerequisites, the installer script and the most common setup problems.

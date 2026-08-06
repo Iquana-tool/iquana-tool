@@ -1,3 +1,21 @@
+# --- IQUANA installation ---------------------------------------------------
+# Everything below is created by install.sh. The component repositories are
+# cloned in place (they are not submodules), and iquana.conf holds the
+# HuggingFace token, the generated database password and the signing key.
+/iquana.conf
+/iquana.conf.bak
+/backend/
+/frontend-react/
+/ai-service/
+/iquana-service-core/
+/logs/
+/.run/
+/.mlflow/
+
+# IDEs
+.idea/
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

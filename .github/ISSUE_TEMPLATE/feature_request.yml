@@ -1,0 +1,116 @@
+name: Feature request
+description: Suggest a new capability or an improvement to an existing one.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Thanks for your interest in IQUANA!
+
+        We are a small research team, so we **cannot guarantee that we will be able to
+        implement your feature request** — we prioritise what fits our ongoing research and
+        the needs of our current users.
+
+        If your request is larger in scope, or if you would like to collaborate to bring
+        IQUANA to your own domain, please get in touch with us directly:
+        **robert.leist@dfki.de**. We are genuinely happy to hear about new application
+        areas, and a short conversation often gets you further than an issue.
+
+        **Please make your request as descriptive as possible.** Screenshots, mockups or
+        even a rough hand-drawn sketch of what you have in mind make it far easier for us
+        to understand and to build the right thing. There is a dedicated field for that
+        below — please use it.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: |
+        Describe the situation you run into today, not the solution yet. Tell us what you
+        are working on — the domain, the kind of images, the size of your dataset — so we
+        can judge how general the problem is.
+      placeholder: |
+        I annotate histology slides with several hundred small, densely packed cells per
+        image. Confirming each suggested instance individually takes far longer than the
+        annotation itself, and I have no way to accept a whole region at once.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like IQUANA to do?
+      description: |
+        Describe the feature as concretely as you can — where it would live in the tool,
+        how you would use it, and what the result should look like. Walk us through it
+        step by step if you already have a workflow in mind.
+      placeholder: |
+        A lasso selection in the suggestion view that accepts every suggestion whose
+        centroid falls inside the drawn region, with a confidence slider to exclude
+        weak ones before confirming.
+    validations:
+      required: true
+
+  - type: textarea
+    id: sketches
+    attributes:
+      label: Sketches, mockups or screenshots
+      description: |
+        Drag and drop images here. A screenshot with arrows drawn on it, a mockup, or a
+        photo of a sketch on paper is perfect — this is the single most helpful thing you
+        can add to a feature request. If the feature exists in another tool, a screenshot
+        of that tool works well too.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which part of IQUANA would this affect?
+      options:
+        - Frontend (annotation UI)
+        - Backend (API, database, exports)
+        - AI service (inference, training, model zoo)
+        - Installer / setup
+        - Documentation
+        - Not sure
+      default: 5
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Workarounds you currently use
+      description: |
+        How do you handle this today — a manual step, an external script, another tool?
+        This helps us judge how much the feature would actually save you.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: collaboration
+    attributes:
+      label: Would you like to collaborate on this?
+      description: |
+        Research collaborations, contributed code and shared datasets all move features up
+        our list considerably.
+      options:
+        - "No, just suggesting the idea"
+        - "Maybe — I would like to discuss it (please also email robert.leist@dfki.de)"
+        - "Yes, I would like to contribute code"
+        - "Yes, I am interested in a research collaboration"
+      default: 0
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and this feature has not been requested yet.
+          required: true
+        - label: I understand that IQUANA is maintained by a small research team and that this request may not be implemented.
+          required: true

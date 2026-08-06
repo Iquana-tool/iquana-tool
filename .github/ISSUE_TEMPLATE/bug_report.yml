@@ -1,0 +1,132 @@
+name: Bug report
+description: Something in IQUANA is broken or behaves unexpectedly.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug!
+
+        This repository collects issues for **all** IQUANA components (frontend, backend,
+        AI service, installer). You are in the right place no matter which part broke.
+
+        The single most useful thing you can give us is a **reliable way to reproduce the
+        problem** — screenshots or a short screen recording usually say more than a
+        paragraph of text.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the bug.
+      placeholder: |
+        When I confirm an AI suggestion on a large image, the contour is saved but the
+        mask shown in the canvas stays the old one until I reload the page.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: |
+        Numbered steps that take you from a fresh start to the bug. Include the dataset,
+        image or model involved if the bug only shows up with specific data.
+      placeholder: |
+        1. Open dataset "reef-2024"
+        2. Select image 12 and switch to the "Suggestions" tool
+        3. Click "Generate suggestions" with the SAM3 model
+        4. Accept the second suggestion
+        5. The canvas still shows the previous mask
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots / screen recording
+      description: |
+        Drag and drop images or videos into this field to attach them. For visual or
+        annotation-related bugs this is often the fastest way for us to understand
+        the problem. Please mark the relevant area if it is not obvious.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component
+      description: Where does the problem show up? Pick "Not sure" if you cannot tell.
+      options:
+        - Frontend (annotation UI)
+        - Backend (API, database, exports)
+        - AI service (inference, training, model zoo)
+        - Installer / setup
+        - Documentation
+        - Not sure
+      default: 5
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: |
+        Logs of the affected service (`./iquana.sh logs backend`, `... logs ai-service`,
+        `... logs frontend`) and, for UI bugs, the browser console (F12 → Console).
+        This field is rendered as a code block, no backticks needed.
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: IQUANA version
+      description: |
+        Output of `./iquana.sh status`, or the commit hashes of the checked-out
+        repositories. If you installed manually, the branch names are enough.
+      placeholder: "channel: stable | backend a1b2c3d | frontend-react e4f5g6h | ai-service i7j8k9l"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: How did you install IQUANA?
+      options:
+        - install.sh (the installer script)
+        - Manual setup (uv / bun by hand)
+        - Other / not sure
+      default: 0
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, browser (for UI bugs), and GPU + CUDA if you use the AI service.
+      placeholder: "Ubuntu 24.04, Firefox 129, RTX 4090 / CUDA 13.0"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and this bug has not been reported yet.
+          required: true
+        - label: I am on an up-to-date installation (I re-ran the installer, or pulled the latest changes).
+          required: false
