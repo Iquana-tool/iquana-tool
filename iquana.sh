@@ -8,7 +8,7 @@
 #   ./iquana.sh status                 what is running, on which port, at which commit
 #   ./iquana.sh logs <service> [-f]    show (and optionally follow) a service log
 #
-# Services: postgres redis mlflow ai-service ai-worker backend frontend
+# Services: postgres redis mlflow ai-service ai-worker backend backend-worker frontend
 #
 # Configuration lives in iquana.conf next to this script and is written by
 # install.sh -- run that first. This file is also sourced *as a library* by
@@ -29,7 +29,7 @@ MLFLOW_HOME="$IQUANA_ROOT/.mlflow"
 # Start order. Infrastructure first: the backend opens its database pool during
 # startup and dies on a refused connection, so postgres has to be accepting
 # clients before it launches.
-SERVICES="postgres redis mlflow ai-service ai-worker backend frontend"
+SERVICES="postgres redis mlflow ai-service ai-worker backend backend-worker frontend"
 
 PG_CONTAINER="iquana-pg"
 PG_IMAGE="pgvector/pgvector:pg16"   # not plain postgres: the cross-image concept store needs the `vector` extension
@@ -278,6 +278,33 @@ start_service() {
             run_bg backend "$IQUANA_ROOT" \
                 "uv run --directory '$IQUANA_ROOT/backend' --frozen fastapi run main.py --host 0.0.0.0 --port $BACKEND_PORT"
             wait_for_port "$BACKEND_PORT" backend 180 && ok "backend ready on http://${IQUANA_HOST}:$BACKEND_PORT (docs at /docs)"
+            ;;
+        backend-worker)
+            # Batch inference: the backend's own Celery app, walking one dataset-wide
+            # inference run image by image. It lives here rather than in the ai-service
+            # because every unit reads and writes the gateway's database; the GPU work is
+            # still an HTTP call into the ai-service.
+            #
+            # -Q backend.jobs, and NOT the default "celery" queue: ai-worker above consumes
+            # that one as a fallback, and both apps share this Redis. A message landing on
+            # the shared queue is whichever worker grabs it first -- and the ai-service has
+            # no inference.* task registered, so it would discard it and the run would stop
+            # dead with nothing to retry it. Keep these two -Q lists disjoint.
+            #
+            # Concurrency 1 for the same reason as ai-worker: every unit ends up on the one
+            # GPU behind the ai-service, so a second worker buys contention, not throughput.
+            #
+            # solo on macOS, same as ai-worker. The backend never runs a model, but torch
+            # still lands in its venv transitively (via iquana-toolbox -> mlflow), and
+            # forking a process that has imported torch aborts in the child on Darwin.
+            local backend_pool="prefork"
+            [ "$(uname -s)" = "Darwin" ] && backend_pool="solo"
+            run_bg backend-worker "$IQUANA_ROOT" \
+                "export REDIS_URL='redis://localhost:$REDIS_PORT'; \
+                 uv run --directory '$IQUANA_ROOT/backend' --frozen celery -A app.services.celery_app worker \
+                    -Q backend.jobs --pool=$backend_pool --concurrency=1 --loglevel=info"
+            sleep 2
+            process_running backend-worker && ok "backend-worker started" || warn "backend-worker exited immediately -- see ./iquana.sh logs backend-worker"
             ;;
         frontend)
             # BROWSER=none stops react-scripts from trying to open a browser on
