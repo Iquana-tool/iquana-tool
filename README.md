@@ -56,10 +56,11 @@ Every command also takes a list of services, e.g. `./iquana.sh restart ai-servic
 | `frontend` | the web UI you annotate in | 3000 |
 | `backend` | REST API, database, exports | 8000 |
 | `ai-service` | model inference for all AI-assisted tasks | 8004 |
-| `ai-worker` | Celery worker for long-running jobs (training) | — |
+| `ai-worker` | Celery worker for model training | — |
+| `backend-worker` | Celery worker for batch inference runs | — |
 | `mlflow` | model and experiment tracking | 5000 |
 | `postgres` | the database (container) | 5432 |
-| `redis` | task broker between backend, service and worker (container) | 6379 |
+| `redis` | task broker for both workers (container) | 6379 |
 
 Logs are written to `logs/`, one file per service.
 
