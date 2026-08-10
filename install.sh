@@ -35,14 +35,11 @@ INSTALL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # a bogus "Hash mismatch for torchvision==...". Fixed in 0.10.0.
 MIN_UV_VERSION="0.10.0"
 
-# name|url. iquana-service-core is not a service of its own -- the ai-service
-# pyproject declares it as an editable path dependency at ../iquana-service-core,
-# so it has to sit right next to the ai-service checkout.
+# name|url
 REPOS="
 backend|https://github.com/Iquana-tool/backend.git
 frontend-react|https://github.com/Iquana-tool/frontend-react.git
 ai-service|https://github.com/Iquana-tool/ai-service.git
-iquana-service-core|https://github.com/Iquana-tool/iquana-service-core.git
 "
 
 # uv projects to sync, in order. frontend-react is handled separately (bun).
@@ -340,8 +337,8 @@ repo_names() { printf '%s\n' $REPOS | awk -F'|' 'NF {print $1}'; }
 repo_url()   { printf '%s\n' $REPOS | awk -F'|' -v n="$1" '$1 == n {print $2}'; }
 
 # The dev channel tracks each repository's `dev` branch, but not every
-# repository has one (iquana-service-core, for instance, only has main), so the
-# branch is resolved against the remote and falls back to main.
+# repository has one, so the branch is resolved against the remote and falls
+# back to main.
 resolve_branch() {
     local url="$1"
     [ "$IQUANA_CHANNEL" = dev ] || { printf 'main\n'; return; }
