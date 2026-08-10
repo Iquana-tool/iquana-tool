@@ -133,7 +133,6 @@ iquana-tool/
 ├── backend/              REST API, database models, exports
 ├── frontend-react/       the web UI
 ├── ai-service/           unified AI service (inference + training)
-├── iquana-service-core/  shared service library the AI service builds on
 ├── logs/                 one log file per service
 └── .mlflow/              MLflow tracking database and artifacts
 ```

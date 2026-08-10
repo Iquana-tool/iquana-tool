@@ -433,7 +433,7 @@ cmd_status() {
     say ""
     info "checked-out revisions:"
     local repo
-    for repo in backend frontend-react ai-service iquana-service-core; do
+    for repo in backend frontend-react ai-service; do
         if [ -d "$IQUANA_ROOT/$repo/.git" ]; then
             printf '    %-22s %s (%s)\n' "$repo" \
                 "$(git -C "$IQUANA_ROOT/$repo" rev-parse --short HEAD)" \
