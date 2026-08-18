@@ -1,7 +1,7 @@
 # IQUANA
 
-**I**nteractive **QUAN**tification and **A**nnotation — a tool for AI-assisted segmentation,
-annotation and quantification of image datasets, built at [DFKI](https://www.dfki.de/).
+**I**nteractive **QU**antification, **AN**notation and **A**nalysis — a tool for AI-assisted segmentation,
+annotation and quantification of scientific datasets, built at [DFKI](https://www.dfki.de/).
 
 This repository is the entry point for the whole tool. It contains
 
