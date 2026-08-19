@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IQUANA — annotation and quantification for scientific image data</title>
+<meta name="description" content="AI-assisted annotation and quantification of scientific image datasets — hierarchical label spaces, review queues, reproducible measurements. Built at DFKI.">
+<meta name="keywords" content="image annotation tool, scientific image quantification, microscopy annotation software, AI-assisted segmentation, hierarchical labels, image analysis, open source annotation">
+<link rel="canonical" href="https://iquana-tool.github.io/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="IQUANA — annotation, quantification and evaluation for scientific image data">
+<meta property="og:description" content="AI-assisted annotation and reproducible quantification of scientific image datasets, with a human correction loop. Built at DFKI.">
+<meta property="og:url" content="https://iquana-tool.github.io/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%230d7c66'/%3E%3Ctext%20x='32'%20y='45'%20font-family='Georgia,serif'%20font-size='34'%20font-weight='700'%20fill='%23ffffff'%20text-anchor='middle'%3EIQ%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#ffffff; --surface:#f4f7f6; --surface-2:#e9efec; --border:#dae3df;
+  --text:#111d19; --muted:#57685f; --accent:#0d7c66; --accent-soft:#e2f1ec;
+  --on-accent:#ffffff;
+  --code-bg:#101a17; --code-text:#dfeae5;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a1211; --surface:#111b18; --surface-2:#18251f; --border:#243430;
+    --text:#e8f1ec; --muted:#9ab0a6; --accent:#3fbf9f; --accent-soft:#12312a;
+    --on-accent:#04140f;
+    --code-bg:#060d0c; --code-text:#d6e6e0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a1211; --surface:#111b18; --surface-2:#18251f; --border:#243430;
+  --text:#e8f1ec; --muted:#9ab0a6; --accent:#3fbf9f; --accent-soft:#12312a;
+  --on-accent:#04140f;
+  --code-bg:#060d0c; --code-text:#d6e6e0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+  line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:1000px;margin:0 auto;padding:0 24px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+nav{border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px;gap:16px}
+.mark{font-family:Georgia,"Times New Roman",serif;font-size:1.32rem;letter-spacing:.02em;color:var(--text)}
+.mark b{color:var(--accent);font-weight:700}
+.mark span{font-weight:400}
+nav ul{display:flex;gap:22px;list-style:none;margin:0;padding:0;font-size:.93rem;flex-wrap:wrap}
+nav ul a{color:var(--muted)}
+nav ul a:hover{color:var(--accent)}
+
+header{padding:76px 0 64px;border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,var(--surface) 0%,var(--bg) 100%)}
+h1{font-size:clamp(2.1rem,5.2vw,3.2rem);line-height:1.15;margin:0 0 18px;letter-spacing:-.02em;max-width:20ch}
+.lede{font-size:clamp(1.02rem,2.2vw,1.18rem);color:var(--muted);max-width:62ch;margin:0 0 12px}
+.byline{font-size:.92rem;color:var(--muted);margin:0 0 30px}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-block;padding:11px 20px;border-radius:8px;font-size:.95rem;font-weight:600;
+  border:1px solid var(--accent);transition:opacity .15s}
+.btn:hover{text-decoration:none;opacity:.88}
+.btn-primary{background:var(--accent);color:var(--on-accent)}
+.btn-ghost{background:transparent;color:var(--accent)}
+
+section{padding:60px 0;border-bottom:1px solid var(--border)}
+h2{font-size:1.5rem;margin:0 0 10px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 32px;max-width:64ch}
+h3{font-size:1.02rem;margin:0 0 6px}
+
+.loop{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:14px}
+.step{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+.step .n{font-family:var(--mono);font-size:.74rem;color:var(--accent);font-weight:700;
+  background:var(--accent-soft);display:inline-block;padding:2px 8px;border-radius:20px;margin-bottom:9px}
+.step p{margin:0;font-size:.88rem;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(266px,1fr));gap:18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:20px}
+.card p{margin:0;font-size:.9rem;color:var(--muted)}
+
+pre{background:var(--code-bg);color:var(--code-text);padding:18px 20px;border-radius:10px;
+  overflow-x:auto;font-family:var(--mono);font-size:.86rem;line-height:1.7;margin:0 0 14px}
+code{font-family:var(--mono);font-size:.88em;background:var(--surface-2);
+  padding:1px 5px;border-radius:4px}
+pre code{background:none;padding:0;font-size:inherit}
+
+.tbl{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:440px}
+th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--border)}
+th{background:var(--surface);font-weight:600;font-size:.82rem;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+tr:last-child td{border-bottom:none}
+td code{background:var(--surface-2)}
+
+.note{background:var(--accent-soft);border-left:3px solid var(--accent);
+  padding:16px 20px;border-radius:0 8px 8px 0;font-size:.92rem}
+.note p{margin:0;color:var(--text)}
+.note p+p{margin-top:10px}
+
+footer{padding:40px 0 56px;font-size:.88rem;color:var(--muted)}
+footer a{color:var(--muted);text-decoration:underline}
+footer a:hover{color:var(--accent)}
+.fl{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <div class="mark"><b>IQ</b><span>UANA</span></div>
+  <ul>
+    <li><a href="#what">What it does</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#start">Get started</a></li>
+    <li><a href="https://github.com/Iquana-tool/iquana-tool">GitHub</a></li>
+  </ul>
+</div></nav>
+
+<header><div class="wrap">
+  <h1>Annotate, quantify and evaluate scientific image data.</h1>
+  <p class="lede">IQUANA is a research tool for AI-assisted segmentation and annotation of
+  scientific image datasets — with a hierarchical label space, reproducible measurements in
+  physical units, and a human correction loop around every model prediction.</p>
+  <p class="byline"><strong>I</strong>nteractive <strong>QUAN</strong>tification and
+  <strong>A</strong>nnotation · built at <a href="https://www.dfki.de/">DFKI</a></p>
+  <div class="cta">
+    <a class="btn btn-primary" href="#start">Get started</a>
+    <a class="btn btn-ghost" href="https://github.com/Iquana-tool/iquana-tool">View on GitHub</a>
+  </div>
+</div></header>
+
+<section id="what"><div class="wrap">
+  <h2>A loop, not a labelling queue</h2>
+  <p class="sub">Most annotation tools stop at the mask. IQUANA carries the same objects
+  through measurement and review, so what you export is an analysis rather than a pile of
+  polygons — and every number stays traceable to the object it came from.</p>
+  <div class="loop">
+    <div class="step"><div class="n">01</div><h3>Upload</h3>
+      <p>Datasets with typed per-image metadata you can filter and group by.</p></div>
+    <div class="step"><div class="n">02</div><h3>Predict</h3>
+      <p>Run segmentation models across a dataset, one model per label if you need it.</p></div>
+    <div class="step"><div class="n">03</div><h3>Correct</h3>
+      <p>Review and correction queues surface what the model most likely got wrong.</p></div>
+    <div class="step"><div class="n">04</div><h3>Quantify</h3>
+      <p>Per-object metrics in physical units, driven by configurable profiles.</p></div>
+    <div class="step"><div class="n">05</div><h3>Export</h3>
+      <p>Measurements, provenance and label hierarchy out to your own analysis.</p></div>
+  </div>
+</div></section>
+
+<section id="features"><div class="wrap">
+  <h2>What is in it</h2>
+  <p class="sub">Built for research groups who need the measurements to be defensible, not
+  just the masks to look right.</p>
+  <div class="grid">
+    <div class="card"><h3>AI-assisted segmentation</h3>
+      <p>Prompted and automatic segmentation backed by foundation models including SAM and
+      DINOv3, with interactive refinement on top of every prediction.</p></div>
+    <div class="card"><h3>Hierarchical label space</h3>
+      <p>Labels nest into parent–child trees, so a class can be refined without discarding
+      the annotations above it. An optional LLM assistant drafts the hierarchy from a
+      description of your domain.</p></div>
+    <div class="card"><h3>Quantification profiles</h3>
+      <p>Choose which metrics matter for a dataset. Area, perimeter, circularity and
+      diameter ship as standard; the metric registry is extensible.</p></div>
+    <div class="card"><h3>Review &amp; correction queues</h3>
+      <p>Snapshot queues route predictions to reviewers in a chosen order, track what was
+      fixed versus deliberately left, and keep model output separable from human edits.</p></div>
+    <div class="card"><h3>Calibration to real units</h3>
+      <p>Calibrate images so measurements come out in millimetres rather than pixels, with
+      per-dataset defaults for consistent acquisition setups.</p></div>
+    <div class="card"><h3>Batch inference</h3>
+      <p>Queue model runs across whole datasets in the background, ordered by your label
+      hierarchy, and patch or replace existing annotations.</p></div>
+    <div class="card"><h3>Train your own models</h3>
+      <p>Fine-tune on your corrected annotations. Runs, metrics and model versions are
+      tracked in MLflow and registered for reuse.</p></div>
+    <div class="card"><h3>Multi-user datasets</h3>
+      <p>Role-based access with per-dataset membership, so annotators, curators and owners
+      see the right surface and provenance stays attributable.</p></div>
+  </div>
+</div></section>
+
+<section id="start"><div class="wrap">
+  <h2>Get started</h2>
+  <p class="sub">One installer sets up every component. Linux and macOS are supported
+  directly; on Windows, run it inside WSL 2.</p>
+<pre><code>git clone https://github.com/Iquana-tool/iquana-tool.git
+cd iquana-tool
+./install.sh</code></pre>
+  <p class="sub">The installer asks for the release channel, ports, CUDA support and your
+  HuggingFace token, then clones the components, installs dependencies and offers to start
+  everything. When it finishes, IQUANA is at <code>http://localhost:3000</code>.</p>
+
+  <h3 style="margin:34px 0 12px;font-size:1.12rem">Prerequisites</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Requirement</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>git</code></td><td>fetching the component repositories</td></tr>
+      <tr><td><code>uv</code> ≥ 0.10</td><td>Python environments for the backend and AI service</td></tr>
+      <tr><td><code>bun</code></td><td>the React frontend</td></tr>
+      <tr><td>Docker or Podman</td><td>PostgreSQL and Redis run as containers</td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub" style="margin-top:16px">An NVIDIA GPU is optional but strongly recommended
+  — without one, inference and training fall back to the CPU. Full installation, update and
+  troubleshooting notes are in the
+  <a href="https://github.com/Iquana-tool/iquana-tool#readme">README</a>.</p>
+</div></section>
+
+<section id="collab"><div class="wrap">
+  <h2>Beyond images</h2>
+  <p class="sub">IQUANA is built around image datasets today. The annotation, quantification
+  and review machinery is not inherently two-dimensional, and we are actively exploring
+  what it takes to bring the same loop to other scientific modalities — starting with 1D
+  signals such as powder diffraction patterns.</p>
+  <div class="note">
+    <p><strong>Interested in your own domain?</strong> We are a small research team at DFKI
+    and we would rather generalise the tool against a real problem than guess at one. If
+    you have a dataset that needs annotation and quantification, or you are interested in a
+    research collaboration, get in touch.</p>
+    <p><a href="mailto:robert.leist@dfki.de">robert.leist@dfki.de</a> ·
+    <a href="https://github.com/Iquana-tool/iquana-tool/issues/new/choose">Report a bug or request a feature</a></p>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div class="fl">
+    <a href="https://github.com/Iquana-tool/iquana-tool">GitHub</a>
+    <a href="https://github.com/Iquana-tool/iquana-tool#readme">Documentation</a>
+    <a href="https://github.com/Iquana-tool/iquana-tool/issues/new/choose">Issues</a>
+    <a href="mailto:robert.leist@dfki.de">Contact</a>
+  </div>
+  <div>IQUANA is developed at the <a href="https://www.dfki.de/">German Research Center for
+  Artificial Intelligence (DFKI)</a>. Released under
+  <a href="https://github.com/Iquana-tool/iquana-tool/blob/main/LICENSE">CC BY-NC-SA 4.0</a>.</div>
+</div></footer>
+
+</body>
+</html>
