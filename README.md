@@ -1,7 +1,8 @@
 # IQUANA
 
-**I**nteractive **QUAN**tification and **A**nnotation — a tool for AI-assisted segmentation,
-annotation and quantification of image datasets, built at [DFKI](https://www.dfki.de/).
+**I**ntelligent **QUAN**tification, **A**nnotation and **A**nalysis — a tool for AI-assisted
+segmentation, annotation and quantification of scientific image datasets, built at
+[DFKI](https://www.dfki.de/) in partnership with [HIFMB](https://hifmb.de/).
 
 This repository is the entry point for the whole tool. It contains
 
@@ -90,13 +91,33 @@ All answers are stored in `iquana.conf` next to the installer (mode `600`, gitig
 holds your tokens and the generated database password and signing key). From it the
 installer generates the per-service configuration:
 
-- `backend/.env` — database, Redis, MLflow and AI-service URLs, CORS origins, signing key
+- `backend/.env` — database, Redis, MLflow and AI-service URLs, CORS origins, signing key,
+  and this instance's identity (see below)
 - `ai-service/.env` — HuggingFace token, Redis and MLflow URLs
 - `frontend-react/.env.local` — the API URL the browser calls, and the frontend's port
 
 To change something, either run `./install.sh --reconfigure` or edit `iquana.conf` by hand
 and re-run `./install.sh`. Editing the generated `.env` files directly works too, but the
 next installer run will replace them (keeping a `.bak` copy).
+
+### Identifying your instance
+
+If other people will sign in to your installation, the installer can ask for a name, a
+hosting organisation and an address to request access from. All three appear on the
+sign-in page — "Welcome to HIFMB Reef Lab", "hosted by ...", "Request access from ..." —
+and all three are optional: leave them empty and the page simply reads as IQUANA.
+
+The same section asks whether **self-registration** is allowed. It is off by default, so
+an installation reachable from your network does not accept strangers unless you say so;
+with it off you create accounts and hand them out. The *first* account can always be
+created either way, so a fresh installation is never locked out of itself.
+
+These live in `backend/.env` rather than the frontend's, because the registration policy
+has to be enforced by the API — a sign-in page that merely hides the link is not a closed
+door — and because Vite bakes frontend variables in at build time, which would mean
+rebuilding to correct a typo in your instance name. The sign-in page reads them from
+`GET /instance/` at runtime, so `./install.sh --reconfigure` followed by a backend restart
+is enough to change them.
 
 ### Serving IQUANA to other machines
 

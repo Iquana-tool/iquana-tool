@@ -310,7 +310,7 @@ start_service() {
             # BROWSER=none stops react-scripts from trying to open a browser on
             # a headless machine; PORT is how it picks its listen port.
             run_bg frontend "$IQUANA_ROOT" \
-                "export PORT=$FRONTEND_PORT BROWSER=none; cd '$IQUANA_ROOT/frontend-react' && bun start"
+                "export PORT=$FRONTEND_PORT BROWSER=none; cd '$IQUANA_ROOT/frontend-react' && bun run dev"
             wait_for_port "$FRONTEND_PORT" frontend 180 && ok "frontend ready on http://${IQUANA_HOST}:$FRONTEND_PORT"
             ;;
         *)
