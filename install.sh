@@ -194,7 +194,7 @@ check_prerequisites() {
     if runtime_ready; then
         ok "$RUNTIME (container runtime)"
     elif detect_runtime; then
-        warn "$RUNTIME is installed but not responding. Start Docker Desktop (or 'podman machine start') and run this script again."
+        warn "$RUNTIME is installed but not responding -- $(runtime_start_hint) Then run this script again."
         missing=yes
     else
         warn "no container runtime found. Docker is a prerequisite: the postgres database and the redis broker run as containers and cannot be started without it. See https://docs.docker.com/get-docker/"
