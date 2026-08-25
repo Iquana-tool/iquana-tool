@@ -162,8 +162,30 @@ Nothing is installed outside this directory except the container volume
 
 ## Troubleshooting
 
-**"no container runtime found"** — Docker is not installed or the daemon is not running.
-Start Docker Desktop (or `podman machine start`) and run the installer again.
+**"no container runtime found"** — neither `docker` nor `podman` is on `PATH`. Both work;
+install either one and run the installer again.
+
+**"docker is installed but not responding"** — the CLI is present but the daemon is not
+reachable. On Windows, start Docker Desktop and enable WSL integration for your distro. If
+`dockerd` runs inside WSL itself, the usual cause is socket permissions — add yourself to
+the group and reopen the shell:
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+If you have podman installed and working, you can simply use that instead:
+
+```bash
+CONTAINER_RUNTIME=podman ./install.sh
+```
+
+The choice is written to the generated config, so `./iquana.sh` reuses it from then on.
+
+**Running with podman** — podman is supported as a drop-in. Note that `podman machine start`
+applies only to macOS and native Windows, where podman needs its own Linux VM. Inside WSL and
+on Linux podman runs natively, there is no VM, and that command will always report
+`VM does not exist` — run `podman info` instead to see the real error.
 
 **A port is already in use** — the installer warns and lets you pick another one. To change
 ports later, run `./install.sh --reconfigure`.

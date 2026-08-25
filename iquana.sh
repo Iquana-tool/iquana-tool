@@ -31,11 +31,17 @@ MLFLOW_HOME="$IQUANA_ROOT/.mlflow"
 # clients before it launches.
 SERVICES="postgres redis mlflow ai-service ai-worker backend backend-worker frontend"
 
+# Image names are fully qualified on purpose. Docker silently expands a bare
+# `redis:7-alpine` to Docker Hub; podman refuses to guess and fails with
+# "short-name ... did not resolve to an alias and no unqualified-search
+# registries are defined". The docker.io/ prefix is valid for both runtimes, so
+# spelling it out costs nothing and keeps podman working without the user
+# having to write a registries.conf.
 PG_CONTAINER="iquana-pg"
-PG_IMAGE="pgvector/pgvector:pg16"   # not plain postgres: the cross-image concept store needs the `vector` extension
+PG_IMAGE="docker.io/pgvector/pgvector:pg16"   # not plain postgres: the cross-image concept store needs the `vector` extension
 PG_VOLUME="iquana-pg-data"          # named, so removing the container does not take the database with it
 REDIS_CONTAINER="iquana-redis"
-REDIS_IMAGE="redis:7-alpine"
+REDIS_IMAGE="docker.io/library/redis:7-alpine"
 
 # --- output ----------------------------------------------------------------
 
@@ -85,17 +91,63 @@ load_conf() {
 
 # Docker is the documented prerequisite, but podman is CLI-compatible for
 # everything used here, so it is accepted as a drop-in.
+#
+# An explicit CONTAINER_RUNTIME always wins. Failing that, prefer a runtime that
+# actually answers `info` over the first one merely present on PATH: a docker
+# that is installed but unusable -- daemon down, or the user not in the `docker`
+# group, which is the common case under WSL -- would otherwise mask a perfectly
+# healthy podman and send people off debugging the wrong runtime entirely. When
+# none of them respond we still report the first one installed, so the caller
+# can say "installed but not responding" rather than "not installed".
 detect_runtime() {
     if [ -n "${CONTAINER_RUNTIME:-}" ] && command -v "$CONTAINER_RUNTIME" >/dev/null 2>&1; then
         RUNTIME="$CONTAINER_RUNTIME"
-    elif command -v docker >/dev/null 2>&1; then
-        RUNTIME="docker"
-    elif command -v podman >/dev/null 2>&1; then
-        RUNTIME="podman"
-    else
-        return 1
+        export RUNTIME
+        return 0
     fi
+
+    local candidate installed=
+    for candidate in docker podman; do
+        command -v "$candidate" >/dev/null 2>&1 || continue
+        [ -n "$installed" ] || installed="$candidate"
+        if "$candidate" info >/dev/null 2>&1; then
+            RUNTIME="$candidate"
+            export RUNTIME
+            return 0
+        fi
+    done
+
+    [ -n "$installed" ] || return 1
+    RUNTIME="$installed"
     export RUNTIME
+}
+
+# What to tell someone whose runtime is installed but not answering. `podman
+# machine` only exists where podman needs its own Linux VM (macOS, native
+# Windows); under WSL and on Linux podman runs natively, there is no machine,
+# and the command can only ever fail with "VM does not exist" -- so never offer
+# it there.
+runtime_start_hint() {
+    local in_wsl=no
+    [ -n "${WSL_DISTRO_NAME:-}" ] && in_wsl=yes
+    [ -e /proc/sys/fs/binfmt_misc/WSLInterop ] && in_wsl=yes
+
+    case "${RUNTIME:-docker}" in
+        *podman*)
+            if [ "$in_wsl" = yes ] || [ "$(uname -s)" = Linux ]; then
+                printf 'podman runs natively here, so there is no VM to start -- run `podman info` to see the underlying error.'
+            else
+                printf 'start its VM with `podman machine start`.'
+            fi
+            ;;
+        *)
+            if [ "$in_wsl" = yes ]; then
+                printf 'start Docker Desktop with WSL integration enabled for this distro; or, if dockerd runs inside WSL, check your user is in the `docker` group -- `sudo usermod -aG docker $USER`, then reopen the shell. If you have podman installed and working, `CONTAINER_RUNTIME=podman` will use that instead.'
+            else
+                printf 'start Docker Desktop, or the docker daemon.'
+            fi
+            ;;
+    esac
 }
 
 runtime_ready() {
