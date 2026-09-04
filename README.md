@@ -1,6 +1,6 @@
 # IQUANA
 
-**I**nteractive **QU**antification, **AN**notation and **A**nalysis — a tool for AI-assisted segmentation,
+**I**ntelligent **QU**antification, **AN**notation and **A**nalysis — a tool for AI-assisted segmentation,
 annotation and quantification of scientific datasets, built at [DFKI](https://www.dfki.de/).
 
 This repository is the entry point for the whole tool. It contains
@@ -9,6 +9,28 @@ This repository is the entry point for the whole tool. It contains
 - the **issue tracker** for all of IQUANA — bug reports and feature requests for the
   frontend, the backend, the AI service and the installer all belong
   [here](https://github.com/Iquana-tool/iquana-tool/issues/new/choose).
+
+📖 **The full documentation lives at [iquana-tool.github.io/docs](https://iquana-tool.github.io/docs/)** —
+concepts, task-by-task guides, keyboard shortcuts, the metric reference and troubleshooting.
+This README covers installing and running the tool; everything about *using* it is there.
+
+## What IQUANA does
+
+Most annotation tools stop at the mask. IQUANA carries the same objects through measurement
+and review, so what you export is an analysis rather than a pile of polygons — and every
+number stays traceable to the object it came from.
+
+| | Step | What happens |
+|---|---|---|
+| 01 | **Upload** | Datasets with typed per-image metadata you can filter and group by. |
+| 02 | **Annotate** | Point, box, polygon and freedraw prompts become outlines via SAM 2/3. Objects nest arbitrarily deep. |
+| 03 | **Predict** | Train instance-segmentation models on what you have annotated, then run them across the dataset — one model per label where you need it. |
+| 04 | **Correct** | Review and correction queues surface what the model most likely got wrong. |
+| 05 | **Quantify** | Per-object metrics in physical units, driven by configurable profiles. |
+| 06 | **Export** | Measurements, provenance and label hierarchy out to your own analysis, or annotations as COCO. |
+
+Each pass through the loop improves the annotations, and the corrected annotations are what
+you fine-tune the next model on.
 
 ## Quick start
 
@@ -160,6 +182,15 @@ iquana-tool/
 Nothing is installed outside this directory except the container volume
 `iquana-pg-data` (the database) and the containers `iquana-pg` and `iquana-redis`.
 
+Each component is its own repository, with a README covering its internals:
+
+| Repo | Role |
+|---|---|
+| [backend](https://github.com/Iquana-tool/backend) | REST + WebSocket API, database, permissions, exports |
+| [frontend-react](https://github.com/Iquana-tool/frontend-react) | The web UI (React + Vite) |
+| [ai-service](https://github.com/Iquana-tool/ai-service) | Model inference and training for every AI task |
+| [iquana-toolbox](https://github.com/Iquana-tool/iquana-toolbox) | Shared schemas, metric registry, MLflow registry — a dependency of the three above, not a checkout the installer makes |
+
 ## Troubleshooting
 
 **"no container runtime found"** — neither `docker` nor `podman` is on `PATH`. Both work;
@@ -195,6 +226,21 @@ in particular can take a few minutes on its first start while it downloads model
 
 **"uv is too old"** — run `uv self update`. Versions below 0.10 reject the PyTorch wheels
 the AI service needs.
+
+For anything not listed here, see
+[Troubleshooting](https://iquana-tool.github.io/docs/operations/troubleshooting/) and
+[GPU and CUDA](https://iquana-tool.github.io/docs/operations/gpu/) in the documentation.
+
+## Documentation
+
+| | |
+|---|---|
+| [Getting started](https://iquana-tool.github.io/docs/getting-started/) | Install, first run, configuration, updating |
+| [Concepts](https://iquana-tool.github.io/docs/concepts/) | Datasets, label hierarchy, objects, calibration, quantification, review, roles |
+| [Guides](https://iquana-tool.github.io/docs/guides/) | Task-by-task walkthroughs, from a first dataset to an exported analysis |
+| [Reference](https://iquana-tool.github.io/docs/reference/) | Keyboard shortcuts, metrics, services and ports, CLI |
+
+The site is built from [Iquana-tool/Iquana-tool.github.io](https://github.com/Iquana-tool/Iquana-tool.github.io).
 
 ## Reporting bugs and requesting features
 
