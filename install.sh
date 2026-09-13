@@ -35,14 +35,11 @@ INSTALL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # a bogus "Hash mismatch for torchvision==...". Fixed in 0.10.0.
 MIN_UV_VERSION="0.10.0"
 
-# name|url. iquana-service-core is not a service of its own -- the ai-service
-# pyproject declares it as an editable path dependency at ../iquana-service-core,
-# so it has to sit right next to the ai-service checkout.
+# name|url
 REPOS="
 backend|https://github.com/Iquana-tool/backend.git
 frontend-react|https://github.com/Iquana-tool/frontend-react.git
 ai-service|https://github.com/Iquana-tool/ai-service.git
-iquana-service-core|https://github.com/Iquana-tool/iquana-service-core.git
 "
 
 # uv projects to sync, in order. frontend-react is handled separately (bun).
@@ -197,7 +194,7 @@ check_prerequisites() {
     if runtime_ready; then
         ok "$RUNTIME (container runtime)"
     elif detect_runtime; then
-        warn "$RUNTIME is installed but not responding. Start Docker Desktop (or 'podman machine start') and run this script again."
+        warn "$RUNTIME is installed but not responding -- $(runtime_start_hint) Then run this script again."
         missing=yes
     else
         warn "no container runtime found. Docker is a prerequisite: the postgres database and the redis broker run as containers and cannot be started without it. See https://docs.docker.com/get-docker/"
@@ -237,6 +234,43 @@ configure() {
     info "unless you want to open IQUANA to your network -- it is baked into the"
     info "frontend's API URL and into the backend's allowed CORS origins."
     IQUANA_HOST="$(ask "    hostname or IP?" "${IQUANA_HOST:-localhost}")"
+
+    say ""
+    # Only worth asking when other people will sign in: a single-researcher
+    # install on localhost needs none of it, and the sign-in page reads fine
+    # with every one of these left empty.
+    info "If other people will sign in to this installation, you can name it and"
+    info "say who to ask for an account. Both appear on the sign-in page."
+    local brand_default
+    brand_default="$([ -n "${INSTANCE_NAME:-}${INSTANCE_CONTACT:-}" ] && echo y || echo n)"
+    if ask_yes_no "    identify this instance to its users?" "$brand_default"; then
+        info "    e.g. 'HIFMB Reef Lab' -- shown as 'Welcome to ...'"
+        INSTANCE_NAME="$(ask "    instance name?" "${INSTANCE_NAME:-}")"
+        info "    e.g. 'the Helmholtz Institute for Functional Marine Biodiversity'"
+        info "    -- shown as 'hosted by ...', so phrase it to follow that"
+        INSTANCE_ORG="$(ask "    hosting organisation?" "${INSTANCE_ORG:-}")"
+        info "    where people without an account should ask for one"
+        INSTANCE_CONTACT="$(ask "    access contact (email)?" "${INSTANCE_CONTACT:-}")"
+        info "    optional one-line notice under the sign-in form, e.g. usage terms"
+        INSTANCE_NOTICE="$(ask "    notice?" "${INSTANCE_NOTICE:-}")"
+    else
+        INSTANCE_NAME=""; INSTANCE_ORG=""; INSTANCE_CONTACT=""; INSTANCE_NOTICE=""
+    fi
+
+    say ""
+    # Off by default: an instance reachable from the network should not accept
+    # strangers because nobody thought to say otherwise. The backend still lets
+    # the *first* account be created regardless, so a fresh install can always
+    # be signed into -- see register_user in the backend.
+    info "Self-registration lets anyone who can reach IQUANA create their own"
+    info "account. With it off, you create accounts and hand them out. The first"
+    info "account can always be created either way, so you are never locked out."
+    if ask_yes_no "    allow self-registration?" \
+        "$([ "${INSTANCE_ALLOW_REGISTRATION:-false}" = true ] && echo y || echo n)"; then
+        INSTANCE_ALLOW_REGISTRATION=true
+    else
+        INSTANCE_ALLOW_REGISTRATION=false
+    fi
 
     say ""
     info "Ports (press Enter to accept the default):"
@@ -311,6 +345,12 @@ write_conf() {
 IQUANA_CHANNEL="$IQUANA_CHANNEL"
 IQUANA_HOST="$IQUANA_HOST"
 
+INSTANCE_NAME="$INSTANCE_NAME"
+INSTANCE_ORG="$INSTANCE_ORG"
+INSTANCE_CONTACT="$INSTANCE_CONTACT"
+INSTANCE_NOTICE="$INSTANCE_NOTICE"
+INSTANCE_ALLOW_REGISTRATION="$INSTANCE_ALLOW_REGISTRATION"
+
 FRONTEND_PORT="$FRONTEND_PORT"
 BACKEND_PORT="$BACKEND_PORT"
 AI_SERVICE_PORT="$AI_SERVICE_PORT"
@@ -340,8 +380,8 @@ repo_names() { printf '%s\n' $REPOS | awk -F'|' 'NF {print $1}'; }
 repo_url()   { printf '%s\n' $REPOS | awk -F'|' -v n="$1" '$1 == n {print $2}'; }
 
 # The dev channel tracks each repository's `dev` branch, but not every
-# repository has one (iquana-service-core, for instance, only has main), so the
-# branch is resolved against the remote and falls back to main.
+# repository has one, so the branch is resolved against the remote and falls
+# back to main.
 resolve_branch() {
     local url="$1"
     [ "$IQUANA_CHANNEL" = dev ] || { printf 'main\n'; return; }
@@ -456,6 +496,11 @@ AI_SERVICE_URL=http://localhost:$AI_SERVICE_PORT
 SECRET_KEY=$SECRET_KEY
 LABEL_SPACE_LLM_MODEL=$LABEL_SPACE_LLM_MODEL
 LABEL_SPACE_LLM_API_KEY=$LABEL_SPACE_LLM_API_KEY
+INSTANCE_NAME=$INSTANCE_NAME
+INSTANCE_ORG=$INSTANCE_ORG
+INSTANCE_CONTACT=$INSTANCE_CONTACT
+INSTANCE_NOTICE=$INSTANCE_NOTICE
+INSTANCE_ALLOW_REGISTRATION=$INSTANCE_ALLOW_REGISTRATION
 "
     ok "backend/.env"
 
@@ -468,12 +513,20 @@ ALLOWED_ORIGINS=http://localhost:$BACKEND_PORT
 "
     ok "ai-service/.env"
 
-    # .env.local, not .env: create-react-app gives it precedence over the
-    # repository's own .env, so an update can never overwrite these values.
+    # .env.local, not .env: Vite gives it precedence over the repository's own
+    # .env and gitignores it by convention, so an update can never overwrite
+    # these values.
+    #
+    # VITE_, not REACT_APP_: the frontend moved from create-react-app to Vite,
+    # which only exposes variables carrying its own prefix. The old REACT_APP_
+    # names were silently ignored, leaving src/api/config.js on its
+    # http://localhost:8000 fallback no matter what hostname or port was chosen
+    # here. Instance branding is deliberately absent -- Vite substitutes these at
+    # build time, so it lives on the backend and is fetched at runtime instead.
     write_env "$INSTALL_ROOT/frontend-react/.env.local" "\
 # Generated by install.sh -- edit iquana.conf and re-run the installer instead.
-REACT_APP_API_BASE_URL=http://$IQUANA_HOST:$BACKEND_PORT
-REACT_APP_WS_URL=ws://$IQUANA_HOST:$BACKEND_PORT
+VITE_API_BASE_URL=http://$IQUANA_HOST:$BACKEND_PORT
+VITE_WS_URL=ws://$IQUANA_HOST:$BACKEND_PORT
 PORT=$FRONTEND_PORT
 "
     ok "frontend-react/.env.local"
