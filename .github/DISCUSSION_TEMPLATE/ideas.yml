@@ -1,0 +1,41 @@
+title: "[Idea] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an idea! A few short answers help us understand it.
+        Found a bug instead? Please open an issue:
+        https://github.com/Iquana-tool/iquana-tool/issues/new/choose
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to do?
+      description: Describe your task or your research question, not only the feature.
+      placeholder: "Example: I count cells in microscope images and need the count per image in a table."
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: How do you do it today?
+      description: In IQUANA, in another tool, or by hand. What is hard about it?
+    validations:
+      required: false
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: What would help? Rough ideas are fine.
+    validations:
+      required: true
+  - type: input
+    id: images
+    attributes:
+      label: What kind of images do you work with?
+      placeholder: "Example: brightfield microscopy, TIFF, about 2000 × 2000 px"
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        Please don't share patient data or confidential images.

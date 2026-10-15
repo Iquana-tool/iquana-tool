@@ -1,5 +1,10 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Questions, ideas and feedback
+    url: https://github.com/Iquana-tool/iquana-tool/discussions
+    about: >-
+      Have a question, an idea, or want to share feedback? Talk to us and other
+      IQUANA users in Discussions.
   - name: Collaboration, research or larger feature requests
     url: mailto:robert.leist@dfki.de
     about: >-
