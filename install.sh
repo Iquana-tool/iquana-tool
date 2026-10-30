@@ -258,19 +258,11 @@ configure() {
     fi
 
     say ""
-    # Off by default: an instance reachable from the network should not accept
-    # strangers because nobody thought to say otherwise. The backend still lets
-    # the *first* account be created regardless, so a fresh install can always
-    # be signed into -- see register_user in the backend.
-    info "Self-registration lets anyone who can reach IQUANA create their own"
-    info "account. With it off, you create accounts and hand them out. The first"
-    info "account can always be created either way, so you are never locked out."
-    if ask_yes_no "    allow self-registration?" \
-        "$([ "${INSTANCE_ALLOW_REGISTRATION:-false}" = true ] && echo y || echo n)"; then
-        INSTANCE_ALLOW_REGISTRATION=true
-    else
-        INSTANCE_ALLOW_REGISTRATION=false
-    fi
+    # There is no self-registration: the installer creates one admin (see
+    # ensure_admin) and that admin creates every other account.
+    info "IQUANA has no self-registration. The installer creates one admin account;"
+    info "that admin creates everyone else's on the admin page."
+    ADMIN_USERNAME="$(ask "    admin username?" "${ADMIN_USERNAME:-admin}")"
 
     say ""
     info "Ports (press Enter to accept the default):"
@@ -349,7 +341,7 @@ INSTANCE_NAME="$INSTANCE_NAME"
 INSTANCE_ORG="$INSTANCE_ORG"
 INSTANCE_CONTACT="$INSTANCE_CONTACT"
 INSTANCE_NOTICE="$INSTANCE_NOTICE"
-INSTANCE_ALLOW_REGISTRATION="$INSTANCE_ALLOW_REGISTRATION"
+ADMIN_USERNAME="$ADMIN_USERNAME"
 
 FRONTEND_PORT="$FRONTEND_PORT"
 BACKEND_PORT="$BACKEND_PORT"
@@ -500,7 +492,6 @@ INSTANCE_NAME=$INSTANCE_NAME
 INSTANCE_ORG=$INSTANCE_ORG
 INSTANCE_CONTACT=$INSTANCE_CONTACT
 INSTANCE_NOTICE=$INSTANCE_NOTICE
-INSTANCE_ALLOW_REGISTRATION=$INSTANCE_ALLOW_REGISTRATION
 "
     ok "backend/.env"
 
@@ -572,6 +563,42 @@ install_dependencies() {
     ok "frontend-react"
 }
 
+# --- first admin -----------------------------------------------------------
+
+# There is no self-registration: the first admin is created here, and every other
+# account by that admin on the admin page. Runs on every install and update but
+# does nothing once the instance has an active admin (create_admin.py --bootstrap),
+# so re-running the installer never resets anyone's password.
+#
+# The script generates the password itself -- passing one in would put it in the
+# process list -- and prints it on a marked line, which is shown once in the summary.
+# It needs the database, so postgres is started for it; with --no-start postgres is
+# stopped again afterwards unless it was already running.
+ensure_admin() {
+    step "Checking for an administrator"
+    runtime_ready || die "no working container runtime found -- postgres is needed to create the first admin. $(runtime_start_hint)"
+    local pg_was_up=no
+    [ "$("$RUNTIME" ps --filter "name=^${PG_CONTAINER}$" --format '{{.Names}}' 2>/dev/null || true)" = "$PG_CONTAINER" ] \
+        && pg_was_up=yes
+    start_service postgres
+
+    local out
+    out="$(uv run --directory "$INSTALL_ROOT/backend" --frozen \
+        python scripts/create_admin.py --bootstrap "$ADMIN_USERNAME")" \
+        || die "could not create the first admin. The output above says why."
+    printf '%s\n' "$out" | grep -v '^IQUANA_ADMIN_PASSWORD=' | sed '/^$/d' | while IFS= read -r line; do info "$line"; done
+    ADMIN_PASSWORD_ONCE="$(printf '%s\n' "$out" | sed -n 's/^IQUANA_ADMIN_PASSWORD=//p' | tail -n 1)"
+    if [ -n "$ADMIN_PASSWORD_ONCE" ]; then
+        ok "created admin '$ADMIN_USERNAME'"
+    else
+        ok "an administrator already exists"
+    fi
+
+    if [ "$NO_START" = yes ] && [ "$pg_was_up" = no ]; then
+        stop_service postgres
+    fi
+}
+
 # --- main ------------------------------------------------------------------
 
 banner() {
@@ -592,6 +619,12 @@ summary() {
     info "logs:                    ./iquana.sh logs backend -f"
     info "update:                  ./install.sh"
     say ""
+    if [ -n "${ADMIN_PASSWORD_ONCE:-}" ]; then
+        info "${C_BOLD}first admin${C_RESET}  user ${C_BOLD}$ADMIN_USERNAME${C_RESET}  password ${C_BOLD}$ADMIN_PASSWORD_ONCE${C_RESET}"
+        info "this password is shown only now. Sign in with it; you will be asked to pick your own."
+        info "create everyone else's account on the admin page."
+        say ""
+    fi
     if [ -z "$HF_ACCESS_TOKEN" ]; then
         warn "no HuggingFace token was configured -- gated model weights will fail to download. Re-run ./install.sh --reconfigure to add one."
     fi
@@ -631,6 +664,8 @@ main() {
     : "${LABEL_SPACE_LLM_API_KEY:=}"
     : "${SECRET_KEY:=$(random_secret)}"
     : "${POSTGRES_PASSWORD:=$(random_secret)}"
+    : "${ADMIN_USERNAME:=admin}"
+    ADMIN_PASSWORD_ONCE=""
 
     local apply_updates=yes
     if [ "$existing" = yes ]; then
@@ -663,6 +698,8 @@ main() {
         # Configuration may still have changed even when no code was updated.
         write_env_files
     fi
+    # Also on a plain re-run: an installation from before this step has no admin yet.
+    ensure_admin
 
     summary
 
