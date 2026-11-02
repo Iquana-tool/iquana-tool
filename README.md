@@ -132,8 +132,10 @@ and all three are optional: leave them empty and the page simply reads as IQUANA
 
 There is no self-registration. The installer asks for an admin username (default `admin`),
 creates that account with a generated password and shows the password **once**, at the end
-of the run; you are asked to choose your own at the first sign-in. That admin creates every
-other account on the admin page. Re-running the installer never touches an existing admin.
+of the run; you are asked to choose your own at the first sign-in. That admin then creates
+accounts on the admin page, or sends someone a **registration link** to create their own
+(single-use and valid for 7 days by default). There is no open sign-up. Re-running the
+installer never touches an existing admin.
 Locked out? `cd backend && uv run python scripts/create_admin.py <username> <new password>`
 resets the password and makes the account an admin again.
 
