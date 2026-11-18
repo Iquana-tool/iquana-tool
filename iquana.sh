@@ -205,7 +205,7 @@ run_bg() {
     fi
     local log; log="$(log_file "$name")"
     : > "$log"
-    ( cd "$workdir" && nohup bash -c "$cmd" >>"$log" 2>&1 & echo $! > "$(pid_file "$name")" )
+    ( cd "$workdir" && nohup bash -c "$cmd" </dev/null >>"$log" 2>&1 & echo $! > "$(pid_file "$name")" )
 }
 
 # pgrep is present on every supported platform, but ps is the universal
@@ -278,7 +278,7 @@ start_service() {
         postgres)
             ensure_container "$PG_CONTAINER" \
                 "$RUNTIME exec $PG_CONTAINER pg_isready -U $POSTGRES_USER -d $POSTGRES_DB" \
-                -p "${POSTGRES_PORT}:5432" \
+                -p "127.0.0.1:${POSTGRES_PORT}:5432" \
                 -v "${PG_VOLUME}:/var/lib/postgresql/data" \
                 -e "POSTGRES_USER=$POSTGRES_USER" \
                 -e "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" \
@@ -289,7 +289,7 @@ start_service() {
         redis)
             ensure_container "$REDIS_CONTAINER" \
                 "$RUNTIME exec $REDIS_CONTAINER redis-cli ping" \
-                -p "${REDIS_PORT}:6379" \
+                -p "127.0.0.1:${REDIS_PORT}:6379" \
                 "$REDIS_IMAGE"
             ok "redis ready on port $REDIS_PORT"
             ;;
@@ -328,7 +328,7 @@ start_service() {
             ;;
         backend)
             run_bg backend "$IQUANA_ROOT" \
-                "uv run --directory '$IQUANA_ROOT/backend' --frozen fastapi run main.py --host 0.0.0.0 --port $BACKEND_PORT"
+                "uv run --directory '$IQUANA_ROOT/backend' --frozen fastapi run main.py --host ${BACKEND_BIND:-127.0.0.1} --port $BACKEND_PORT"
             wait_for_port "$BACKEND_PORT" backend 180 && ok "backend ready on http://${IQUANA_HOST}:$BACKEND_PORT (docs at /docs)"
             ;;
         backend-worker)
