@@ -260,8 +260,8 @@ configure() {
     say ""
     # There is no self-registration: the installer creates one admin (see
     # ensure_admin) and that admin creates every other account.
-    info "IQUANA has no self-registration. The installer creates one admin account;"
-    info "that admin creates everyone else's on the admin page."
+    info "IQUANA has no open sign-up. The installer creates one admin account; that"
+    info "admin creates the others, or sends registration links, on the admin page."
     ADMIN_USERNAME="$(ask "    admin username?" "${ADMIN_USERNAME:-admin}")"
 
     say ""
@@ -622,7 +622,7 @@ summary() {
     if [ -n "${ADMIN_PASSWORD_ONCE:-}" ]; then
         info "${C_BOLD}first admin${C_RESET}  user ${C_BOLD}$ADMIN_USERNAME${C_RESET}  password ${C_BOLD}$ADMIN_PASSWORD_ONCE${C_RESET}"
         info "this password is shown only now. Sign in with it; you will be asked to pick your own."
-        info "create everyone else's account on the admin page."
+        info "create other accounts, or send registration links, on the admin page."
         say ""
     fi
     if [ -z "$HF_ACCESS_TOKEN" ]; then
